@@ -4,16 +4,23 @@ pipeline {
     stages {
         stage('add properties') {
             steps {
-                withCredentials([file(credentialsId: 'application', variable: 'application'),
-                                file(credentialsId: 'application-email', variable: 'application-email'),
-                                file(credentialsId: 'application-dev', variable: 'application-dev'),
-                                file(credentialsId: 'application-prod', variable: 'application-prod')]) {
+                withCredentials([
+                    file(credentialsId: 'application', variable: 'application'),
+                    file(credentialsId: 'application-email', variable: 'application_email'),
+                    file(credentialsId: 'application-dev', variable: 'application_dev'),
+                    file(credentialsId: 'application-prod', variable: 'application_prod')
+                ]) {
                     script {
-                        sh 'chmod 755 /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources'
-                        sh 'cp ${application}       /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application.yml'
-                        sh 'cp ${application-email}   /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-email.properties'
-                        sh 'cp ${application-dev}   /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-dev.properties'
-                        sh 'cp ${application-prod}  /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-prod.properties'
+                        sh '''
+                            mkdir -p /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources
+                            chmod -R u+rwX /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources
+                        '''
+                        sh """
+                            cp "$application" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application.yml
+                            cp "$application_email" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-email.properties
+                            cp "$application_dev" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-dev.properties
+                            cp "$application_prod" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-prod.properties
+                        """
                     }
                 }
             }
@@ -23,10 +30,10 @@ pipeline {
             steps {
                 dir('/var/jenkins_home/workspace/jenkins-emoji-cms-api') {
                    sh '''
-                    echo 'start bootJar'
-                    chmod +x gradlew
-                    ./gradlew clean bootJar
-                    '''
+                        echo 'start bootJar'
+                        chmod +x gradlew
+                        ./gradlew clean bootJar
+                   '''
                 }
             }
         }
