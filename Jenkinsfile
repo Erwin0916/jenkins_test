@@ -33,7 +33,7 @@ pipeline {
 
         stage('build-emoji-cms-api') {
             steps {
-                dir("${env.WORKSPACE}/jenkins-emoji-cms-api") {
+                dir("${env.WORKSPACE}") {
                    sh '''
                         echo 'start bootJar'
                         chmod +x gradlew
@@ -45,7 +45,7 @@ pipeline {
 
         stage('build-jenkins-build-deploy') {
             steps {
-                dir("${env.WORKSPACE}/Jenkins-build-deploy") {
+                dir("${env.WORKSPACE}") {
                    sh '''
                         echo 'start bootJar'
                         chmod +x gradlew
