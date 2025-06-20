@@ -50,6 +50,7 @@ public class AuthApi {
 
         res = ResponseEntity.ok(authService.login(request));
 
+
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             String resString = objectMapper.writeValueAsString(res.getBody());
