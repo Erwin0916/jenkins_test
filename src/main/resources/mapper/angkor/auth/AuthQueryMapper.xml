@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.auth.dao.mapper.AuthQueryMapper">
+    <resultMap id="adminLoginMap" type="com.angkorchat.emoji.cms.global.config.security.dto.LoginDto">
+        <id column="id" property="id" javaType="Integer"/>
+        <result column="adminName" property="adminName" javaType="String"/>
+        <result column="auth" property="auth" javaType="String"/>
+        <result column="name" property="name" javaType="String"/>
+        <result column="userAngkorId" property="userAngkorId" javaType="String"/>
+        <result column="angkorId" property="angkorId" javaType="String"/>
+        <result column="loginId" property="loginId" javaType="String"/>
+        <association property="password" javaType="com.angkorchat.emoji.cms.global.config.security.dto.PasswordDto">
+            <id column="password" property="pw" javaType="String"/>
+            <result column="try_cnt" property="wrongCount" javaType="Byte"/>
+        </association>
+    </resultMap>
+
+    <select id="adminLogin" parameterType="String" resultMap="adminLoginMap">
+        /* adminLogin */
+        SELECT
+            id ,
+            userid AS adminName ,
+            userangkorid AS userAngkorId ,
+            lv AS auth ,
+            name ,
+            password ,
+            try_cnt ,
+            angkorid AS angkorId ,
+            email AS loginId
+        FROM
+            ank_emoji_admin_user
+        WHERE
+            email = #{loginId}
+    </select>
+
+    <select id="loginInfo" parameterType="Integer" resultType="CmsLoginInfo">
+        /* loginInfo */
+        SELECT
+            aeau.name ,
+            aeau.email ,
+            aeau.phone AS phoneNumber ,
+            aeau.angkorid AS angkorId ,
+            aeau.userangkorid AS userAngkorId ,
+            aec.code AS permission ,
+            aeag.name AS groupName
+        FROM
+            ank_emoji_admin_user aeau
+        JOIN
+            ank_emoji_code aec
+        ON
+            aeau.lv = aec.code
+        JOIN
+            ank_emoji_admin_group aeag
+        ON
+            aeau.group_id = aeag.id
+        WHERE
+            aeau.id = #{id}
+    </select>
+
+    <update id="increaseTryCnt" parameterType="hashMap">
+        /* increaseTryCnt */
+        UPDATE
+            ank_emoji_admin_user
+        SET
+            try_cnt = #{tryCnt}
+        WHERE
+            email = #{loginId}
+    </update>
+
+    <update id="integrationAngkorUserId" parameterType="hashMap">
+        /* integrationAngkorUserId */
+        UPDATE
+            ank_emoji_admin_user
+        SET
+            angkorid = #{angkorId} ,
+            userangkorid = #{userAngkorId}
+        WHERE
+            email = #{loginId}
+    </update>
+
+    <update id="changePassword" parameterType="hashMap">
+        /* changePassword */
+        UPDATE
+            ank_emoji_admin_user
+        SET
+            password = #{password}
+        WHERE
+            email = #{loginId}
+    </update>
+
+    <insert id="insertAuthKey" parameterType="hashMap">
+        /* insertAuthKey */
+        INSERT INTO
+            ank_emoji_admin_user_auth (
+                angkorid ,
+                auth_key ,
+                expire_tm
+            ) VALUES (
+                #{angkorId} ,
+                #{authKey} ,
+                DATE_ADD(NOW(), INTERVAL 3 MINUTE)
+            )
+    </insert>
+
+    <select id="checkAuthKey" parameterType="hashMap" resultType="CmsAuthKey">
+        /* checkAuthKey */
+        SELECT
+            auth_key ,
+            expire_tm
+        FROM
+            ank_emoji_admin_user_auth
+        WHERE
+            angkorid = #{angkorId}
+        ORDER BY
+            id DESC
+        LIMIT 1
+    </select>
+
+    <update id="updateRefreshToken" parameterType="hashMap">
+        /* updateRefreshToken */
+        INSERT INTO
+            ank_emoji_admin_refresh_token (
+                admin_id ,
+                token ,
+                token_created_dt
+            ) VALUES (
+                #{id} ,
+                #{refreshToken} ,
+                NOW()
+            )
+            ON DUPLICATE KEY UPDATE
+                token = #{refreshToken} ,
+                token_created_dt = NOW()
+    </update>
+
+    <select id="checkRefreshToken" parameterType="hashMap" resultType="Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_admin_refresh_token
+        WHERE
+            admin_id = #{id}
+            AND token = #{refreshToken}
+    </select>
+</mapper>

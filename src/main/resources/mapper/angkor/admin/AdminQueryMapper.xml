@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.admin.dao.mapper.AdminQueryMapper">
+    <!-- 관리자 목록 -->
+    <sql id="adminListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (aeau.name LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR aeau.email LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR aeau.phone LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="adminList" parameterType="hashMap" resultType="AdminList">
+        /* adminList */
+        SELECT
+            aeau.id ,
+            aeau.userid AS adminId ,
+            aeau.name ,
+            aeau.lv AS auth ,
+            aeau.phone ,
+            aeau.email ,
+            aeag.name AS groupName
+        FROM
+            ank_emoji_admin_user aeau
+        JOIN
+            ank_emoji_admin_group aeag
+        ON
+            aeau.group_id = aeag.id
+        WHERE
+            aeau.del_yn = 'N'
+        <include refid="adminListCondition"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="adminListCount" parameterType="String" resultType="long">
+        /* adminListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_admin_user aeau
+        JOIN
+            ank_emoji_admin_group aeag
+        ON
+            aeau.group_id = aeag.id
+        WHERE
+            aeau.del_yn = 'N'
+        <include refid="adminListCondition"/>
+    </select>
+
+    <select id="adminUserIdList" resultType="String">
+        /* adminUserIdList */
+        SELECT
+            userangkorid
+        FROM
+            ank_emoji_admin_user
+        WHERE
+            userangkorid IS NOT NULL AND userangkorid != ''
+    </select>
+
+    <!-- 관리자 상세 -->
+    <select id="adminDetail" parameterType="Integer" resultType="AdminDetail">
+        /* adminDetail */
+        SELECT
+            aeau.id ,
+            aeau.userid AS adminId ,
+            aeau.name ,
+            aeau.userangkorid AS userAngkorId,
+            aeau.lv AS auth ,
+            aeau.phone ,
+            aeau.email ,
+            aeau.group_id ,
+            aeag.name AS groupName ,
+            aeau.register_id AS managerId ,
+            aeau.update_dt AS updateDt
+        FROM
+            ank_emoji_admin_user aeau
+        JOIN
+            ank_emoji_admin_group aeag
+        ON
+            aeau.group_id = aeag.id
+        WHERE
+            aeau.id = #{id}
+    </select>
+
+    <select id="checkAdminExist" parameterType="hashMap" resultType="Integer">
+        /* checkAdminExist */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_admin_user
+        WHERE
+            email = #{email}
+            AND del_yn = 'N'
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+    <!-- 관리자 새 비밀번호 발급 -->
+    <update id="resetAdminPassword" parameterType="hashMap">
+        /* resetAdminPassword */
+        UPDATE
+            ank_emoji_admin_user
+        SET
+            password = #{pw} ,
+            try_cnt = 0 ,
+            update_dt = NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+    <!-- 관리자 계정 생성 -->
+    <insert id="registerAdmin" parameterType="RegisterAdmin">
+        /* registerAdmin */
+        <selectKey resultType="String" keyProperty="adminId" order="BEFORE">
+            SELECT CONCAT('Admin', IFNULL((SELECT MAX(id) FROM ank_emoji_admin_user), 0) + 1) AS adminId
+        </selectKey>
+
+        INSERT INTO
+            ank_emoji_admin_user (
+                userid ,
+                lv ,
+                name ,
+                password ,
+                email ,
+                phone ,
+                create_dt ,
+                group_id ,
+                register_id ,
+                update_dt
+            ) VALUES (
+                #{adminId} ,
+                #{auth} ,
+                #{name} ,
+                #{password} ,
+                #{email} ,
+                #{phone} ,
+                NOW() ,
+                #{groupId} ,
+                #{registerId} ,
+                NOW()
+            )
+    </insert>
+
+    <!-- 관리자 계정 정보 수정 -->
+    <update id="modifyAdminInfo" parameterType="ModifyAdminInfo">
+        /* modifyAdminInfo */
+        UPDATE
+            ank_emoji_admin_user
+        SET
+            email = #{email} ,
+            name = #{name} ,
+            phone = #{phone} ,
+            lv = #{auth} ,
+            update_dt =NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+    <!-- 관리자 계정 소속 그룹 수정 -->
+    <update id="modifyAdminGroup" parameterType="hashMap">
+        /* modifyAdminGroup */
+        UPDATE
+            ank_emoji_admin_user
+        SET
+            group_id = #{groupId}
+        WHERE
+            id = #{id}
+    </update>
+
+    <!-- 그룹 멤버 수 증가 -->
+    <update id="increaseAdminGroupNumber" parameterType="Integer">
+        /* increaseAdminGroupNumber */
+        UPDATE
+            ank_emoji_admin_group
+        SET
+            members = members + 1
+        WHERE
+            id = #{groupId}
+    </update>
+
+    <!-- 그룹 멤버 수 감소 -->
+    <update id="decreaseAdminGroupNumber" parameterType="Integer">
+        /* decreaseAdminGroupNumber */
+        UPDATE
+            ank_emoji_admin_group
+        SET
+            members = members - 1
+        WHERE
+            id = (SELECT group_id FROM ank_emoji_admin_user WHERE id = #{id})
+    </update>
+
+    <!-- 어드민 계정 삭제 -->
+    <delete id="deleteAdmin" parameterType="List">
+        /* deleteAdmin */
+        UPDATE
+            ank_emoji_admin_user
+        SET
+            del_yn = 'Y' ,
+            update_dt = NOW()
+        WHERE
+            del_yn = 'N'
+            AND id IN <foreach collection="ids" item="id" open="(" close=")" separator=", ">#{id}</foreach>
+    </delete>
+
+    <!-- 어드민 그룹 리스트 -->
+    <sql id="groupListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND name LIKE CONCAT('%', #{searchKeyword}, '%')
+        </if>
+    </sql>
+
+    <select id="groupList" parameterType="hashMap" resultType="AdminGroupList">
+        /* groupList */
+        SELECT
+            id ,
+            name ,
+            members
+        FROM
+            ank_emoji_admin_group
+        <where>
+            <include refid="groupListCondition"/>
+        </where>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="groupListCount" parameterType="String" resultType="long">
+        /* groupListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_admin_group
+        <where>
+            <include refid="groupListCondition"/>
+        </where>
+    </select>
+
+    <select id="groupDetail" parameterType="Integer" resultType="AdminGroupDetail">
+        /* groupDetail */
+        SELECT
+            id ,
+            name ,
+            members ,
+            create_dt
+        FROM
+            ank_emoji_admin_group
+        WHERE
+            id = #{id}
+    </select>
+
+    <select id="groupCodeList" resultType="AdminGroupCode">
+        /* groupCodeList */
+        SELECT
+            id ,
+            name
+        FROM
+            ank_emoji_admin_group
+    </select>
+
+    <select id="checkDuplicateGroupName" parameterType="hashMap" resultType="Integer">
+        /* checkDuplicateGroupName */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_admin_group
+        WHERE
+            name = #{name}
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+    <insert id="registerGroup" parameterType="String">
+        /* registerGroup */
+        INSERT INTO
+            ank_emoji_admin_group (
+                name ,
+                members ,
+                create_dt
+            ) VALUES (
+                #{name} ,
+                0 ,
+                NOW()
+            )
+    </insert>
+
+    <update id="modifyGroup" parameterType="hashMap">
+        /* modifyGroup */
+        UPDATE
+            ank_emoji_admin_group
+        SET
+            name = #{name}
+        WHERE
+            id = #{id}
+    </update>
+
+    <delete id="deleteGroup" parameterType="Integer">
+        /* deleteGroup */
+        DELETE
+        FROM
+            ank_emoji_admin_group
+        WHERE
+            id IN <foreach collection="ids" item="id" open="(" close=")" separator=", ">#{id}</foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug" monitorInterval="5">
+    <Properties>
+        <Property name="LOG_PATH">/var/tmp/angkor/logs/emojiCms</Property>
+        <Property name="FILE_PATTERN">[%d{yyyy-MM-dd HH:mm:ss.SSS}] %5p ${sys:PID} --- [%20.20t] %-50.50c{1.} : %m%n%xwEx</Property>
+        <Property name="CONSOLE_PATTERN">[%style{%d{yyyy-MM-dd HH:mm:ss.SSS}}{cyan}] %highlight{%5p} ${sys:PID} --- [%highlight{%20.20t}] %highlight{%-50.50c{1.}} : %m%n%xwEx</Property>
+    </Properties>
+    <Appenders>
+        <Console name="ConsoleLog" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}" charset="UTF-8" disableAnsi="false"/>
+        </Console>
+        <RollingFile name="FileLog">
+            <FileName>${LOG_PATH}/emojiCms.log</FileName>
+            <FilePattern>${LOG_PATH}/backUp/emojiCms.%d{yyyy-MM-dd}.%i.log.gz</FilePattern>
+            <PatternLayout>
+                <Pattern>${FILE_PATTERN}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="${LOG_PATH}" maxDepth="1">
+                    <IfAccumulatedFileCount exceeds="3"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <!-- Package Logger -->
+        <Logger name="com.angkorchat.emoji.cms" level="DEBUG" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+            <AppenderRef ref="FileLog"/>
+        </Logger>
+        <!-- jdbc Logger (SQL 로그 출력) -->
+        <logger name="jdbc.sqlonly" level="OFF" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+        </logger>
+        <logger name="jdbc.sqltiming" level="INFO" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+        </logger>
+        <logger name="jdbc.audit" level="OFF" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+        </logger>
+        <logger name="jdbc.resultset" level="OFF" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+        </logger>
+        <logger name="jdbc.resultsettable" level="INFO" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+        </logger>
+        <!-- Root Logger -->
+        <Root level="info">
+            <AppenderRef ref="ConsoleLog"/>
+            <AppenderRef ref="FileLog"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.studio.settlement.dao.mapper.StudioSettlementQueryMapper">
+    <select id="studioSettlementInfo" parameterType="hashMap" resultType="StudioSettlementInfo">
+        /* studioSettlementInfo */
+        SELECT
+            aaa.amount AS availableEarning,
+            aaa.complete_amount AS completedEarning,
+            aes.total_amount AS estimatedEarning
+        FROM
+            ank_artist_account aaa
+        JOIN (
+            SELECT
+                artist_id,
+                SUM(total_amount) AS total_amount
+            FROM
+                ank_emoji_settlement
+            WHERE
+                stat_date >= CONCAT(#{statDate},'01')
+                AND stat_date <![CDATA[<=]]> CONCAT(#{statDate},'31')
+            GROUP BY
+                artist_id
+        ) aes
+        ON
+            aaa.artist_id = aes.artist_id
+        WHERE
+            aaa.artist_id = #{id}
+    </select>
+
+    <select id="studioSettlementRequestList" parameterType="hashMap" resultType="StudioSettlementRequestList">
+        /* studioSettlementRequestList */
+        SELECT
+            amount ,
+            reg_dt As  applicationDt ,
+            DATE_ADD(reg_dt, INTERVAL 7 DAY) AS scheduledDt ,
+            amount/10 AS tax ,
+            issue_status AS paymentStatus
+        FROM
+            ank_artist_account_settlement_request
+        WHERE
+            artist_id = #{id}
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="studioSettlementRequestListCount" parameterType="Integer" resultType="long">
+        /* studioSettlementRequestListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_artist_account_settlement_request
+        WHERE
+            artist_id = #{id}
+    </select>
+
+
+    <select id="checkRequestExist" parameterType="Integer" resultType="Integer">
+        /* checkRequestExist */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_artist_account_settlement_request
+        WHERE
+            artist_id = #{id}
+            AND issue_status = 'N'
+    </select>
+
+    <select id="checkAvailableSettleAmount" parameterType="Integer" resultType="BigDecimal">
+        /* checkAvailableSettleAmount */
+        SELECT
+            amount
+        FROM
+            ank_artist_account
+        WHERE
+            artist_id = #{id}
+    </select>
+
+    <insert id="studioArtistSettle" parameterType="Integer">
+        /* studioArtistSettle */
+        INSERT INTO
+            ank_artist_account_settlement_request (
+                artist_id ,
+                amount ,
+                account_number ,
+                bank_name ,
+                account_owner ,
+                reg_dt ,
+                issue_status
+            ) SELECT
+                aea.id ,
+                aaa.amount ,
+                aea.account_number ,
+                aea.bank_name ,
+                aea.account_owner ,
+                NOW() ,
+                'N'
+            FROM
+                ank_emoji_artist aea
+            JOIN
+                ank_artist_account aaa
+            ON
+                aea.id = aaa.artist_id
+            WHERE
+                aea.id = #{id}
+    </insert>
+
+    <insert id="studioArtistSettleTest" parameterType="Integer">
+        /* studioArtistSettleTest */
+        INSERT INTO
+            ank_artist_account_settlement_request (
+                artist_id ,
+                amount ,
+                account_number ,
+                bank_name ,
+                account_owner ,
+                reg_dt ,
+                issue_status
+            ) SELECT
+                aea.id ,
+                20 ,
+                aea.account_number ,
+                aea.bank_name ,
+                aea.account_owner ,
+                NOW() ,
+                'N'
+            FROM
+                ank_emoji_artist aea
+            JOIN
+                ank_artist_account aaa
+            ON
+                aea.id = aaa.artist_id
+            WHERE
+                aea.id = #{id}
+    </insert>
+
+    <update id="updateArtistAccount" parameterType="Integer">
+        /* UpdateArtistAccount */
+        UPDATE
+            ank_artist_account
+        SET
+            amount = 0
+        WHERE
+            artist_id = #{id}
+    </update>
+
+    <update id="UpdateArtistAccountTest" parameterType="Integer">
+        /* UpdateArtistAccountTest */
+        UPDATE
+            ank_artist_account
+        SET
+            amount = amount - 20
+        WHERE
+            artist_id = #{id}
+    </update>
+</mapper>

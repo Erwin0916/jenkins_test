@@ -1,0 +1,868 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.emoji.dao.mapper.CmsEmojiQueryMapper">
+    <sql id="emojiListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (aem.name_en LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR aem.name_kh  LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR aea.name_en LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="emojiType != null and emojiType != ''">
+            AND aem.emoji_type = #{emojiType}
+        </if>
+        <if test="status != null and status != ''">
+            AND aem.status = #{status}
+        </if>
+    </sql>
+
+    <select id="emojiList" parameterType="hashMap" resultType="EmojiListDto">
+        /* emojiList */
+        SELECT
+            aem.id ,
+            aem.name_en AS emojiName ,
+            aem.artist_emoji_id AS artistEmojiId ,
+            aem.point AS price ,
+            aem.origin_point AS originPrice ,
+            IFNULL(aem.main_moving_image_url,aem.main_image_url) AS mainImageUrl ,
+            aem.status ,
+            aem.reg_dt AS regDt ,
+            aem.emoji_type ,
+            aea.id As artistId,
+            aea.name_en AS artistName
+        FROM
+            ank_emoji_master aem
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aem.artist_id = aea.id
+        JOIN
+            ank_artist_emoji_master aaem
+        ON
+            aem.artist_emoji_id = aaem.id
+        WHERE
+            aem.status != '002003'
+        <include refid="emojiListCondition"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="emojiListCount" parameterType="hashMap" resultType="long">
+        /* emojiListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_master aem
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aem.artist_id = aea.id
+        JOIN
+            ank_artist_emoji_master aaem
+        ON
+            aem.artist_emoji_id = aaem.id
+        WHERE
+            aem.status != '002003'
+        <include refid="emojiListCondition"/>
+    </select>
+
+    <resultMap id="emojiDetailMap" type="com.angkorchat.emoji.cms.domain.angkor.emoji.dto.response.EmojiDetail">
+        <id column="id" property="id" />
+        <result column="emojiNameEn" property="emojiNameEn" />
+        <result column="emojiNameKm" property="emojiNameKm" />
+        <result column="emojiContentsEn" property="emojiContentsEn" />
+        <result column="emojiContentsKm" property="emojiContentsKm" />
+        <result column="period" property="period" />
+        <result column="status" property="status" />
+        <result column="emojiType" property="emojiType" />
+        <result column="imageType" property="imageType" />
+        <result column="openDt" property="openDt" />
+        <result column="mainImageUrl" property="mainImageUrl" />
+        <result column="mainMovingImageUrl" property="mainMovingImageUrl" />
+        <result column="attachmentFileUrl" property="attachmentFileUrl" />
+        <result column="tabImageUrl" property="tabImageUrl" />
+        <result column="point" property="point" />
+        <result column="pointId" property="pointId" />
+        <result column="originPoint" property="originPoint" />
+        <result column="originPointId" property="originPointId" />
+        <result column="artistId" property="artistId" />
+        <result column="artistName" property="artistName" />
+        <result column="viewCount" property="viewCount" />
+        <collection property="emojiUrl" ofType="string">
+            <result column="emojiUrl" />
+        </collection>
+        <collection property="movingEmojiUrl" ofType="string">
+            <result column="movingEmojiUrl" />
+        </collection>
+        <collection property="relatedSites" ofType="string">
+            <result column="relatedSites" />
+        </collection>
+        <collection property="tags" ofType="com.angkorchat.emoji.cms.domain.angkor.emoji.dto.response.TagListDto">
+            <id column="hashtagId" property="id" />
+            <result column="hashtag" property="hashtag" />
+        </collection>
+    </resultMap>
+
+    <select id="emojiDetail" parameterType="Integer" resultMap="emojiDetailMap">
+        /* emojiDetail */
+        SELECT
+            aem.id ,
+            aem.name_en AS emojiNameEn ,
+            aem.name_kh AS emojiNameKm ,
+            aem.contents_en AS emojiContentsEn ,
+            aem.contents_kh AS emojiContentsKm ,
+            aem.period ,
+            aem.status ,
+            aem.emoji_type AS emojiType ,
+            aem.image_type AS imageType ,
+            aem.open_date AS openDt ,
+            aem.main_image_url AS mainImageUrl ,
+            aem.main_moving_image_url AS mainMovingImageUrl ,
+            aaem.attach_file_url AS attachmentFileUrl ,
+            aem.view_cnt AS viewCount ,
+            aes.file_url AS tabImageUrl ,
+            ael.file_url AS emojiUrl ,
+            ael.moving_file_url AS movingEmojiUrl ,
+            aepi.point ,
+            aepi.id AS pointId ,
+            oaepi.point AS originPoint ,
+            oaepi.id AS originPointId ,
+            aea.id AS artistId ,
+            aea.name_en AS artistName ,
+            aeh.id AS hashtagId,
+            aeh.hashtag ,
+            aaers.site_url AS relatedSites
+        FROM
+            ank_emoji_master aem
+        JOIN
+            ank_artist_emoji_master aaem
+        ON
+            aem.artist_emoji_id = aaem.id
+        JOIN
+            ank_emoji_shortcut aes
+        ON
+            aem.id = aes.emoji_id
+        JOIN
+            ank_emoji_list ael
+        ON
+            aem.id = ael.emoji_id
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aem.artist_id = aea.id
+        JOIN
+            ank_emoji_point_info aepi
+        ON
+            aem.point = aepi.point
+        JOIN
+            ank_emoji_point_info oaepi
+        ON
+            aem.origin_point = oaepi.point
+        JOIN
+            ank_emoji_artist_hashtag aeah
+        ON
+            aem.artist_emoji_id = aeah.emoji_id
+        JOIN
+            ank_emoji_hashtag aeh
+        ON
+            aeah.hashtag_id = aeh.id
+        LEFT JOIN
+            ank_artist_emoji_related_site aaers
+        ON
+            aem.artist_emoji_id = aaers.emoji_id
+        WHERE
+            aem.id = #{id}
+    </select>
+
+    <sql id="emojiRequestListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (aaem.name_en LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR aaem.name_kh  LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR aea.name_en LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="status != null and status != ''">
+            AND aaem.status = #{status}
+        </if>
+    </sql>
+
+    <select id="emojiRequestList" parameterType="hashMap" resultType="EmojiListDto">
+        /* emojiRequestList */
+        SELECT
+            aaem.id ,
+            aaem.name_en AS emojiName ,
+            aaem.id AS artistEmojiId ,
+            aaem.point AS price ,
+            aaem.main_image_url AS mainImageUrl ,
+            aaem.status ,
+            aaem.reg_dt AS regDt ,
+            aea.id As artistId,
+            aea.name_en AS artistName
+        FROM
+            ank_artist_emoji_master aaem
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaem.artist_id = aea.id
+        WHERE
+            aaem.status IN ('002004','002005')
+        <include refid="emojiRequestListCondition"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="emojiRequestListCount" parameterType="hashMap" resultType="long">
+        /* emojiRequestListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_artist_emoji_master aaem
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaem.artist_id = aea.id
+        WHERE
+            aaem.status IN ('002004','002005')
+        <include refid="emojiRequestListCondition"/>
+    </select>
+
+    <resultMap id="emojiRequestDetailMap" type="com.angkorchat.emoji.cms.domain.angkor.emoji.dto.response.EmojiRequestDetail">
+        <id column="id" property="id" />
+        <result column="emojiNameEn" property="emojiNameEn" />
+        <result column="emojiNameKm" property="emojiNameKm" />
+        <result column="emojiContentsEn" property="emojiContentsEn" />
+        <result column="emojiContentsKm" property="emojiContentsKm" />
+        <result column="period" property="period" />
+        <result column="status" property="status" />
+        <result column="statusReason" property="statusReason" />
+        <result column="emojiType" property="emojiType" />
+        <result column="imageType" property="imageType" />
+        <result column="openDt" property="openDt" />
+        <result column="mainImageUrl" property="mainImageUrl" />
+        <result column="mainMovingImageUrl" property="mainMovingImageUrl" />
+        <result column="attachmentFileUrl" property="attachmentFileUrl" />
+        <result column="tabImageUrl" property="tabImageUrl" />
+        <result column="point" property="point" />
+        <result column="pointId" property="pointId" />
+        <result column="artistId" property="artistId" />
+        <result column="artistName" property="artistName" />
+        <collection property="emojiUrl" ofType="string">
+            <result column="emojiUrl" />
+        </collection>
+        <collection property="movingEmojiUrl" ofType="string">
+            <result column="movingEmojiUrl" />
+        </collection>
+        <collection property="relatedSites" ofType="string">
+            <result column="relatedSites" />
+        </collection>
+        <collection property="tags" ofType="com.angkorchat.emoji.cms.domain.angkor.emoji.dto.response.TagListDto">
+            <id column="hashtagId" property="id" />
+            <result column="hashtag" property="hashtag" />
+        </collection>
+    </resultMap>
+
+    <select id="emojiRequestDetail" parameterType="Integer" resultMap="emojiRequestDetailMap">
+        /* emojiRequestDetail */
+        SELECT
+            aaem.id ,
+            aaem.name_en AS emojiNameEn ,
+            aaem.name_kh AS emojiNameKm ,
+            aaem.contents_en AS emojiContentsEn ,
+            aaem.contents_kh AS emojiContentsKm ,
+            aaem.period ,
+            aaem.status ,
+            aaem.status_reason AS statusReason ,
+            aaem.emoji_type AS emojiType ,
+            aaem.image_type AS imageType ,
+            aaem.open_date AS openDt ,
+            aaem.main_image_url AS mainImageUrl ,
+            aaem.main_moving_image_url AS mainMovingImageUrl ,
+            aaem.attach_file_url AS attachmentFileUrl ,
+            aaes.file_url AS tabImageUrl ,
+            aael.file_url AS emojiUrl ,
+            aael.moving_file_url AS movingEmojiUrl ,
+            aepi.point ,
+            aepi.id AS pointId ,
+            aea.id AS artistId ,
+            aea.name_en AS artistName ,
+            aeh.id AS hashtagId,
+            aeh.hashtag ,
+            aaers.site_url AS relatedSites
+        FROM
+            ank_artist_emoji_master aaem
+        JOIN
+            ank_artist_emoji_shortcut aaes
+        ON
+            aaem.id = aaes.emoji_id
+        JOIN
+            ank_artist_emoji_list aael
+        ON
+            aaem.id = aael.emoji_id
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaem.artist_id = aea.id
+        LEFT JOIN
+            ank_emoji_point_info aepi
+        ON
+            aaem.point = aepi.point
+        JOIN
+            ank_emoji_artist_hashtag aeah
+        ON
+            aaem.id = aeah.emoji_id
+        JOIN
+            ank_emoji_hashtag aeh
+        ON
+            aeah.hashtag_id = aeh.id
+        LEFT JOIN
+            ank_artist_emoji_related_site aaers
+        ON
+            aaem.id = aaers.emoji_id
+        WHERE
+            aaem.id = #{id}
+    </select>
+
+    <insert id="registerArtistEmojiMaster" parameterType="RegisterEmoji">
+        /* registerArtistEmojiMaster */
+        INSERT INTO
+            ank_artist_emoji_master (
+                name_en ,
+                name_kh ,
+                contents_en ,
+                contents_kh ,
+                point ,
+                period ,
+                status ,
+                emoji_type ,
+                artist_id ,
+                image_type ,
+                open_date ,
+                reg_id ,
+                reg_dt
+            ) VALUES (
+                #{emojiNameEn} ,
+                #{emojiNameKm} ,
+                #{emojiContentsEn} ,
+                #{emojiContentsKm} ,
+                #{point} ,
+                #{period} ,
+                #{status} ,
+                #{emojiType} ,
+                #{artistId} ,
+                #{imageType} ,
+                #{openDt} ,
+                #{regId} ,
+                NOW()
+            )
+
+        <selectKey resultType="Integer" keyProperty="artistEmojiId" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="registerArtistEmojiMasterFile" parameterType="hashMap">
+        /* registerArtistEmojiMasterFile */
+        UPDATE
+            ank_artist_emoji_master
+        SET
+            main_image_url = #{mainEmojiUrl} ,
+        <if test="mainMovingEmojiUrl != null and mainMovingEmojiUrl != ''">
+            main_moving_image_url = #{mainMovingEmojiUrl} ,
+        </if>
+            attach_file_url = #{attachmentFileUrl}
+        WHERE
+            id = #{id}
+    </update>
+
+    <insert id="registerArtistEmojiShortcut" parameterType="hashMap">
+        /* registerArtistEmojiShortcut */
+        INSERT INTO
+            ank_artist_emoji_shortcut (
+                emoji_id ,
+                file_url ,
+                upd_dt
+            ) VALUES (
+                #{id} ,
+                #{tabEmojiUrl} ,
+                NOW()
+            )
+    </insert>
+
+    <insert id="registerArtistEmojiList" parameterType="hashMap">
+        /* registerArtistEmojiList */
+        <selectKey resultType="int" keyProperty="orderNo" order="BEFORE">
+            SELECT
+                IFNULL(MAX(order_no), 0) + 1 AS orderNo
+            FROM
+                ank_artist_emoji_list
+            WHERE
+                emoji_id = #{id}
+        </selectKey>
+
+        INSERT INTO ank_artist_emoji_list (
+            emoji_id,
+            order_no,
+            file_url,
+            moving_file_url,
+            upd_dt
+        )
+        VALUES
+        <foreach collection="fileList" item="file" index="index" separator=",">
+            (
+                #{id},
+                #{orderNo} + ${index} ,
+                #{file.emojiUrl} ,
+                #{file.movingEmojiUrl} ,
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <insert id="registerEmojiMaster" parameterType="EmojiIdDto">
+        /* registerEmojiMaster */
+        INSERT INTO
+            ank_emoji_master (
+                name_en ,
+                name_kh ,
+                contents_en ,
+                contents_kh ,
+                point ,
+                origin_point ,
+                main_image_url ,
+                main_moving_image_url ,
+                image_type ,
+                period ,
+                view_cnt ,
+                status ,
+                open_date ,
+                emoji_type ,
+                artist_id ,
+                artist_emoji_id ,
+                reg_id ,
+                reg_dt
+            ) SELECT
+                name_en ,
+                name_kh ,
+                contents_en ,
+                contents_kh ,
+                point ,
+                #{originPrice} ,
+                main_image_url ,
+                main_moving_image_url ,
+                image_type ,
+                period ,
+                '0' ,
+                status ,
+                open_date ,
+                emoji_type ,
+                artist_id ,
+                #{artistEmojiId} ,
+                reg_id ,
+                reg_dt
+            FROM
+                ank_artist_emoji_master
+            WHERE
+                id = #{artistEmojiId}
+
+        <selectKey resultType="Integer" keyProperty="id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <insert id="registerEmojiShortcut" parameterType="EmojiIdDto">
+        /* registerEmojiShortcut */
+        INSERT INTO
+            ank_emoji_shortcut (
+                emoji_id ,
+                file_url ,
+                upd_dt
+            ) SELECT
+                #{id} ,
+                file_url ,
+                upd_dt
+            FROM
+                ank_artist_emoji_shortcut
+            WHERE
+                emoji_id = #{artistEmojiId}
+    </insert>
+
+    <insert id="registerEmojiList" parameterType="EmojiIdDto">
+        /* registerEmojiList */
+        INSERT INTO
+            ank_emoji_list (
+                emoji_id ,
+                order_no ,
+                file_url ,
+                moving_file_url ,
+                upd_dt
+            ) SELECT
+                #{id} ,
+                order_no ,
+                file_url ,
+                moving_file_url ,
+                upd_dt
+            FROM
+                ank_artist_emoji_list
+            WHERE
+                emoji_id = #{artistEmojiId}
+    </insert>
+
+    <select id="checkEmojiNameDuplicate" resultType="EmojiNameDto">
+        /* checkEmojiNameDuplicate */
+        SELECT
+            name_en AS emojiNameEn ,
+            name_kh AS emojiNameKm
+        FROM
+            ank_emoji_master
+        WHERE
+            status != '002003'
+            AND (name_en = #{emojiNameEn}
+        <if test="emojiNameKm != null and emojiNameKm != ''">
+            OR name_kh = #{emojiNameKm}
+        </if>
+            )
+        LIMIT 1
+    </select>
+
+    <insert id="registerHashTags" parameterType="hashMap">
+        /* registerHashTags */
+        INSERT IGNORE INTO
+            ank_emoji_hashtag (
+                hashtag ,
+                upd_dt
+            ) VALUES
+        <foreach item="tagInfo" index="index" collection="tags" separator=",">
+            (
+                #{tagInfo.tag} ,
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="hashTagInfoListByTags" parameterType="hashMap" resultType="TagDto">
+        /* hashTagInfoListByTags */
+        SELECT
+            id ,
+            hashtag AS tag
+        FROM
+            ank_emoji_hashtag
+        WHERE
+            hashtag IN <foreach collection="tags" item="tagInfo" open="(" close=")" separator=", ">#{tagInfo.tag}</foreach>
+    </select>
+
+    <insert id="registerArtistHashTags" parameterType="hashMap">
+        /* registerArtistHashTags */
+        INSERT INTO
+            ank_emoji_artist_hashtag (
+                emoji_id ,
+                hashtag_id ,
+                upd_dt
+            ) VALUES
+        <foreach item="tagInfo" index="index" collection="tags" separator=",">
+            (
+                #{emojiId} ,
+                #{tagInfo.id} ,
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <insert id="registerArtistRelatedSites" parameterType="hashMap">
+        /* registerArtistRelatedSites */
+        INSERT IGNORE INTO
+            ank_artist_emoji_related_site (
+                emoji_id ,
+                site_url ,
+                reg_dt
+            ) VALUES
+        <foreach item="site" index="index" collection="sites" separator=",">
+            (
+                #{emojiId} ,
+                #{site} ,
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="artistNameList" parameterType="Integer" resultType="ArtistNameDto">
+        /* artistNameList */
+        SELECT
+            id ,
+            name_en AS name
+        FROM
+            ank_emoji_artist
+        WHERE
+            status = #{artistStatus}
+    </select>
+
+    <select id="emojiPointInfoList" resultType="PointInfoDto">
+        /* emojiPointInfoList */
+        SELECT
+            id ,
+            point AS price
+        FROM
+            ank_emoji_point_info
+        WHERE
+            del_yn = 'N'
+        ORDER BY
+            price
+    </select>
+
+    <select id="getEmojiPrice">
+        /* getEmojiPrice */
+        SELECT
+            point AS price
+        FROM
+            ank_emoji_point_info
+        WHERE
+            id = #{id}
+    </select>
+
+    <update id="changeEmojiMasterStatus" parameterType="hashMap">
+        /* changeEmojiMasterStatus */
+        UPDATE
+            ank_emoji_master
+        SET
+            status = #{status} ,
+            status_reason = #{statusReason} ,
+            upd_id = #{adminId} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+    <update id="changeArtistEmojiMasterStatus" parameterType="hashMap">
+        /* changeArtistEmojiMasterStatus */
+        UPDATE
+            ank_artist_emoji_master
+        SET
+            status = #{status} ,
+            upd_id = #{adminId} ,
+            status_reason = #{statusReason} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+    <update id="modifyArtistEmojiMasterInfo" parameterType="ModifyEmojiInfo">
+        /* modifyArtistEmojiMasterInfo */
+        UPDATE
+            ank_artist_emoji_master
+        SET
+            point = #{point} ,
+            period = #{period} ,
+            status = #{status} ,
+            status_reason = #{statusReason} ,
+            open_date = #{openDt} ,
+            emoji_type = #{emojiType} ,
+            upd_id = #{adminId} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{artistEmojiId}
+    </update>
+
+    <select id="getArtistEmojiStatus" parameterType="Integer" resultType="String">
+        /* getArtistEmojiStatus */
+        SELECT
+            status
+        FROM
+            ank_artist_emoji_master
+        WHERE
+            id = #{id}
+    </select>
+    <insert id="registerArtistEmojiMasterLog" parameterType="Integer">
+        /* registerArtistEmojiMasterLog */
+        INSERT INTO
+            ank_artist_emoji_master_log (
+                emoji_id ,
+                name_en ,
+                name_kh ,
+                contents_en ,
+                contents_kh ,
+                point ,
+                main_image_url ,
+                main_moving_image_url ,
+                image_type ,
+                period ,
+                attach_file_url ,
+                status ,
+                status_reason ,
+                open_date ,
+                emoji_type ,
+                artist_id ,
+                reg_id ,
+                reg_dt ,
+                upd_id ,
+                upd_dt ,
+                save_dt
+            ) SELECT
+                id ,
+                name_en ,
+                name_kh ,
+                contents_en ,
+                contents_kh ,
+                point ,
+                main_image_url ,
+                main_moving_image_url ,
+                image_type ,
+                period ,
+                attach_file_url ,
+                status ,
+                status_reason ,
+                open_date ,
+                emoji_type ,
+                artist_id ,
+                reg_id ,
+                reg_dt ,
+                upd_id ,
+                upd_dt ,
+                NOW()
+            FROM
+                ank_artist_emoji_master
+            WHERE
+                id = #{id}
+    </insert>
+
+    <insert id="registerArtistEmojiShortcutLog" parameterType="Integer">
+        /* registerArtistEmojiShortcutLog */
+        INSERT INTO
+            ank_artist_emoji_shortcut_log (
+                emoji_id ,
+                file_url ,
+                upd_dt ,
+                save_dt
+            ) SELECT
+                emoji_id ,
+                file_url ,
+                upd_dt ,
+                NOW()
+            FROM
+                ank_artist_emoji_shortcut
+            WHERE
+                emoji_id = #{id}
+    </insert>
+    <insert id="registerArtistEmojiListLog" parameterType="Integer">
+        /* registerArtistEmojiListLog */
+        INSERT INTO
+            ank_artist_emoji_list_log (
+                emoji_list_id ,
+                emoji_id ,
+                order_no ,
+                file_url ,
+                moving_file_url ,
+                upd_dt ,
+                save_dt
+            ) SELECT
+                id ,
+                emoji_id ,
+                order_no ,
+                file_url ,
+                moving_file_url ,
+                upd_dt ,
+                NOW()
+            FROM
+                ank_artist_emoji_list
+            WHERE
+                emoji_id = #{id}
+    </insert>
+
+    <insert id="registerEmojiMasterLog" parameterType="Integer">
+        /* registerEmojiMasterLog */
+        INSERT INTO
+            ank_emoji_master_log (
+                emoji_id ,
+                name_en ,
+                name_kh ,
+                contents_en ,
+                contents_kh ,
+                point ,
+                origin_point ,
+                main_image_url ,
+                main_moving_image_url ,
+                image_type ,
+                period ,
+                view_cnt ,
+                status ,
+                status_reason ,
+                open_date ,
+                emoji_type ,
+                artist_id ,
+                artist_emoji_id ,
+                reg_id ,
+                reg_dt ,
+                upd_id ,
+                upd_dt ,
+                save_dt
+            ) SELECT
+                id ,
+                name_en ,
+                name_kh ,
+                contents_en ,
+                contents_kh ,
+                point ,
+                origin_point ,
+                main_image_url ,
+                main_moving_image_url ,
+                image_type ,
+                period ,
+                view_cnt ,
+                status ,
+                status_reason ,
+                open_date ,
+                emoji_type ,
+                artist_id ,
+                artist_emoji_id ,
+                reg_id ,
+                reg_dt ,
+                upd_id ,
+                upd_dt ,
+                NOW()
+            FROM
+                ank_emoji_master
+            WHERE
+                id = #{id}
+    </insert>
+
+    <insert id="registerEmojiShortcutLog" parameterType="Integer">
+        /* registerEmojiShortcutLog */
+        INSERT INTO
+            ank_emoji_shortcut_log (
+                emoji_id ,
+                file_url ,
+                upd_dt ,
+                save_dt
+            ) SELECT
+                emoji_id ,
+                file_url ,
+                upd_dt ,
+                NOW()
+            FROM
+                ank_emoji_shortcut
+            WHERE
+                emoji_id = #{id}
+    </insert>
+
+    <insert id="registerEmojiListLog" parameterType="Integer">
+        /* registerEmojiListLog */
+        INSERT INTO
+            ank_emoji_list_log (
+                emoji_list_id ,
+                emoji_id ,
+                order_no ,
+                file_url ,
+                moving_file_url ,
+                upd_dt ,
+                save_dt
+            ) SELECT
+                id ,
+                emoji_id ,
+                order_no ,
+                file_url ,
+                moving_file_url ,
+                upd_dt ,
+                NOW()
+            FROM
+                ank_emoji_list
+            WHERE
+                emoji_id = #{id}
+    </insert>
+</mapper>

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.user.dao.mapper.UserQueryMapper">
+    <!--  userList  -->
+    <sql id="userSelectQuery">
+        /** userSelectQuery **/
+        SELECT angkorid, COUNT(*) AS emojiCount
+          FROM ank_user_emoji
+         WHERE state != 'D'
+        <choose>
+            <when test="angkorIdList.size != 0">
+               AND angkorid IN
+               <foreach item="id" index="index" collection="angkorIdList" open="(" separator="," close=")">
+                   #{id}
+               </foreach>
+            </when>
+        </choose>
+    </sql>
+
+    <select id="userList" resultType="EmojiUserListDto">
+        /** userList **/
+        <include refid="userSelectQuery"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="userListCount" resultType="int">
+        /** userListCount **/
+        SELECT COUNT(*)
+          FROM (<include refid="userSelectQuery"/>) tt
+    </select>
+
+    <!--  userUseEmojiList  -->
+    <sql id="userUseEmojiSelectQuery">
+        /** userUseEmojiSelectQuery **/
+        SELECT b.angkorid AS angkorId
+               , a.id AS emojiId, a.name_en AS emojiName
+               , a.main_image_url AS mainImageUrl, a.emoji_type AS emojiType
+               , b.purchase_type AS purchaseType, b.expired_date AS expiredDate
+               , b.state AS emojiUseState, b.reg_dt AS regDt
+          FROM ank_emoji_master a, ank_user_emoji b
+         WHERE a.id = b.emoji_id
+           AND b.state != 'D'
+           AND b.angkorid = #{angkorId}
+    </sql>
+
+    <select id="userUseEmojiList" resultType="UserUseEmojiListDto">
+        /** userUseEmojiList **/
+        <include refid="userUseEmojiSelectQuery"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="userUseEmojiListCount" resultType="int">
+        /** userUseEmojiListCount **/
+        SELECT COUNT(*)
+          FROM (<include refid="userUseEmojiSelectQuery"/>) tt
+    </select>
+
+    <!--  userPurchaseEmojiList  -->
+    <sql id="userPurchaseEmojiSelectQuery">
+        /** userPurchaseEmojiSelectQuery **/
+        SELECT b.angkorid, b.gift_angkorId AS giftAngkorId, b.point, b.trans_id AS transactionId, approve_code AS approveCode, b.reg_dt AS regDt
+               , a.id AS emojiId, a.name_en AS emojiName
+               , a.main_image_url AS mainImageUrl, a.emoji_type AS emojiType
+          FROM ank_emoji_master a, ank_emoji_transaction_log b
+         WHERE a.id = b.emoji_id
+           AND b.angkorid = #{angkorId}
+    </sql>
+
+    <select id="userPurchaseEmojiList" resultType="UserPurchaseEmojiListDto">
+        /** userPurchaseEmojiList **/
+        <include refid="userPurchaseEmojiSelectQuery"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="userPurchaseEmojiListCount" resultType="int">
+        /** userPurchaseEmojiListCount **/
+        SELECT COUNT(*)
+          FROM (<include refid="userPurchaseEmojiSelectQuery"/>) tt
+    </select>
+
+    <!--  userGiftedEmojiList  -->
+    <sql id="userGiftedEmojiSelectQuery">
+        /** userGiftedEmojiSelectQuery **/
+        SELECT b.angkorid AS giftAngkorId, b.gift_angkorId AS angkorId, b.reg_dt AS regDt
+               , a.id AS emojiId, a.name_en AS emojiName
+               , a.main_image_url AS mainImageUrl, a.emoji_type AS emojiType
+          FROM ank_emoji_master a, ank_emoji_transaction_log b
+         WHERE a.id = b.emoji_id
+           AND b.gift_angkorId = #{angkorId}
+    </sql>
+
+    <select id="userGiftedEmojiList" resultType="UserGiftedEmojiListDto">
+        /** userGiftedEmojiList **/
+        <include refid="userGiftedEmojiSelectQuery"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="userGiftedEmojiListCount" resultType="int">
+        /** userGiftedEmojiListCount **/
+        SELECT COUNT(*)
+          FROM (<include refid="userGiftedEmojiSelectQuery"/>) tt
+    </select>
+
+<!--    &lt;!&ndash;  userDetail  &ndash;&gt;-->
+<!--    <resultMap id="userDetailMap" type="UserDetail">-->
+<!--        <id column="id" property="id" javaType="Integer"/>-->
+<!--        <result column="userAngkorId" property="userAngkorId" javaType="String"/>-->
+<!--        <result column="saveTm" property="saveTm" javaType="String"/>-->
+<!--        <result column="accessTm" property="accessTm" javaType="String"/>-->
+<!--        <result column="status" property="status" javaType="String"/>-->
+<!--        <result column="privacyConsent" property="privacyConsent" javaType="Integer"/>-->
+<!--        <collection property="userCommentList" ofType="UserComment" javaType="ArrayList">-->
+<!--            <result column="adminId" property="adminId" javaType="String"/>-->
+<!--            <result column="cmt" property="cmt" javaType="String"/>-->
+<!--            <result column="cmtSaveTm" property="cmtSaveTm" javaType="String"/>-->
+<!--        </collection>-->
+<!--    </resultMap>-->
+
+<!--    <select id="userDetail" resultMap="userDetailMap">-->
+<!--        /** userDetail **/-->
+<!--        SELECT-->
+<!--            agu.id ,-->
+<!--            agu.userangkorid AS userAngkorId ,-->
+<!--            DATE_FORMAT(agu.save_tm, '%Y-%m-%d') AS saveTm ,-->
+<!--            DATE_FORMAT(agu.access_tm, '%Y-%m-%d') AS accessTm ,-->
+<!--            agu.state AS status ,-->
+<!--            agu.privacy_consent AS privacyConsent ,-->
+<!--            agau.user_id AS adminId ,-->
+<!--            aguc.cmt ,-->
+<!--            aguc.save_tm AS cmtSaveTm-->
+<!--        FROM-->
+<!--            ank_game_user agu-->
+<!--        LEFT JOIN-->
+<!--            ank_game_user_comment aguc-->
+<!--        ON-->
+<!--            agu.id = aguc.game_user_id-->
+<!--        LEFT JOIN-->
+<!--            ank_game_admin_user agau-->
+<!--        ON-->
+<!--            aguc.game_admin_user_id = agau.id-->
+<!--        WHERE-->
+<!--            agu.id = #{id}-->
+<!--    </select>-->
+
+<!--    &lt;!&ndash; 사용자가 플레이한 게임 목록 &ndash;&gt;-->
+<!--    <select id="userPlayList" parameterType="hashMap" resultType="UserPlayList">-->
+<!--        /* userPlayList */-->
+<!--        SELECT-->
+<!--            agu.userangkorid AS userAngkorId ,-->
+<!--            aggu.state AS status ,-->
+<!--            ag.id AS gameId,-->
+<!--            ag.name ,-->
+<!--            ag.main_category ,-->
+<!--            ag.sub_category ,-->
+<!--            agf.file_path AS thumbUrl-->
+<!--        FROM-->
+<!--            ank_game_user agu-->
+<!--        JOIN-->
+<!--            ank_game_game_user aggu-->
+<!--        ON-->
+<!--            agu.id = aggu.game_user_id-->
+<!--        JOIN-->
+<!--            ank_game ag-->
+<!--        ON-->
+<!--            aggu.ank_game_id = ag.id-->
+<!--        JOIN-->
+<!--            ank_game_file agf-->
+<!--        ON-->
+<!--            ag.id = agf.ank_game_id-->
+<!--        WHERE-->
+<!--            agu.id = #{id}-->
+<!--            AND agf.file_area = '004002'-->
+<!--            AND aggu.state IN ('009001', '009002')-->
+<!--        <include refid="common.sortAndOrder"/>-->
+<!--        <include refid="common.limitAndOffset"/>-->
+<!--    </select>-->
+
+<!--    <select id="userPlayListCount" parameterType="integer" resultType="long">-->
+<!--        /* userPlayListCount */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_user agu-->
+<!--        JOIN-->
+<!--            ank_game_game_user aggu-->
+<!--        ON-->
+<!--            agu.id = aggu.game_user_id-->
+<!--        WHERE-->
+<!--            agu.id = #{id}-->
+<!--            AND aggu.state IN ('009001', '009002')-->
+<!--    </select>-->
+
+<!--    &lt;!&ndash; 사용자 게임별 상태 변경 &ndash;&gt;-->
+<!--    <update id="updateUserGameState" parameterType="hashMap">-->
+<!--        /** updateUserGameState **/-->
+<!--        UPDATE-->
+<!--            ank_game_game_user-->
+<!--        SET-->
+<!--            state = #{state} ,-->
+<!--            update_tm = NOW()-->
+<!--        WHERE-->
+<!--            game_user_id = #{id}-->
+<!--            AND ank_game_id = #{gameId}-->
+<!--    </update>-->
+
+<!--    &lt;!&ndash; 유저정보 조회 &ndash;&gt;-->
+<!--    <select id="angkorChatUserInfo" parameterType="String" resultType="String">-->
+<!--        /** angkorChatUserInfo **/-->
+<!--        SELECT-->
+<!--            u.angkorid-->
+<!--        FROM-->
+<!--            angkor.ank_user u-->
+<!--        WHERE-->
+<!--            u.userid_enc IN-->
+<!--        <foreach item="id" index="index" collection="userIds" open="(" separator="," close=")">-->
+<!--            #{id}-->
+<!--        </foreach>-->
+<!--    </select>-->
+</mapper>

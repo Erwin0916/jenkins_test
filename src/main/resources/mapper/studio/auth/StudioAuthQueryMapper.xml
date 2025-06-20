@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.studio.auth.dao.mapper.StudioAuthQueryMapper">
+    <select id="studioArtistLogin" parameterType="String" resultType="com.angkorchat.emoji.cms.global.config.security.dto.StudioLoginDto">
+        /* studioArtistLogin */
+        SELECT
+            id ,
+            angkorid AS angkorId ,
+            name_en AS name ,
+            phonecode AS phoneCode ,
+            phonenumber AS phoneNumber ,
+            email ,
+            status
+        FROM
+            ank_emoji_artist
+        WHERE
+            status != 3
+            AND ( email = #{loginId}
+            OR phonenumber = #{loginId}
+            OR angkorid = #{loginId})
+    </select>
+
+    <select id="studioLoginInfo" parameterType="String" resultType="StudioLoginInfo">
+        /* studioLoginInfo */
+        SELECT
+            id ,
+            name_en AS name ,
+            email ,
+            angkorid AS angkorId ,
+            phonecode AS  phoneCode ,
+            phonenumber AS phoneNumber ,
+            status ,
+            upd_dt AS updateDt
+        FROM
+            ank_emoji_artist
+        WHERE
+            angkorid = #{angkorId}
+    </select>
+
+    <insert id="insertStudioAuthKey" parameterType="hashMap">
+        /* insertStudioAuthKey */
+        INSERT INTO
+            ank_emoji_studio_user_auth (
+                request_id ,
+                auth_key ,
+                expire_tm
+            ) VALUES (
+                #{id} ,
+                #{authKey} ,
+                DATE_ADD(NOW(), INTERVAL 3 MINUTE)
+            )
+    </insert>
+
+    <select id="checkStudioAuthKey" parameterType="String" resultType="StudioAuthKey">
+        /* checkStudioAuthKey */
+        SELECT
+            auth_key ,
+            expire_tm
+        FROM
+            ank_emoji_studio_user_auth
+        WHERE
+            request_id = #{id}
+            AND auth_key = #{authKey}
+    </select>
+
+<!--    <update id="agencyIncreaseTryCnt" parameterType="hashMap">-->
+<!--        /* agencyIncreaseTryCnt */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_user-->
+<!--        SET-->
+<!--            try_cnt = #{tryCnt}-->
+<!--        WHERE-->
+<!--            email = #{loginId}-->
+<!--    </update>-->
+
+<!--    <update id="agencyIntegrationAngkorUserId" parameterType="hashMap">-->
+<!--        /* agencyIntegrationAngkorUserId */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_user-->
+<!--        SET-->
+<!--            angkor_user_id = #{angkorUserId}-->
+<!--        WHERE-->
+<!--            email = #{loginId}-->
+<!--    </update>-->
+
+<!--    <update id="agencyChangePassword" parameterType="hashMap">-->
+<!--        /* agencyChangePassword */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_user-->
+<!--        SET-->
+<!--            password = #{password}-->
+<!--        WHERE-->
+<!--            email = #{loginId}-->
+<!--    </update>-->
+
+
+
+</mapper>

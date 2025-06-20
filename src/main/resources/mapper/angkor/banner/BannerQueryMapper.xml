@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.banner.dao.mapper.BannerQueryMapper">
+    <sql id="bannerListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND name LIKE CONCAT('%', #{searchKeyword}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </sql>
+
+    <select id="bannerList" parameterType="hashMap" resultType="BannerList">
+        /* bannerList */
+        SELECT
+            id ,
+            name ,
+            image_url ,
+            status ,
+            order_no AS orderNo,
+            reg_dt
+        FROM
+            ank_emoji_main_banner
+        WHERE
+            status != 'D'
+        <include refid="bannerListCondition"/>
+        ORDER BY
+            orderNo ASC
+    </select>
+
+    <select id="bannerListCount" parameterType="hashMap" resultType="long">
+        /* bannerListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_main_banner
+        WHERE
+            status != 'D'
+        <include refid="bannerListCondition"/>
+    </select>
+
+
+    <select id="bannerDetail" parameterType="Integer" resultType="BannerDetail">
+        /* bannerDetail */
+        SELECT
+            name ,
+            contents ,
+            image_url ,
+            link_url ,
+            order_no ,
+            start_date AS startDt,
+            end_date AS endDt,
+            status ,
+            reg_id ,
+            reg_dt ,
+            upd_id ,
+            upd_dt
+        FROM
+            ank_emoji_main_banner
+        WHERE
+            id = #{id}
+    </select>
+    <select id="checkBannerNameDuplicate" parameterType="hashMap" resultType="Integer">
+        /* checkBannerNameDuplicate */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_main_banner
+        WHERE
+            name = #{name}
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+    <insert id="registerBanner" parameterType="RegisterBanner">
+        /* registerBanner */
+        INSERT INTO
+            ank_emoji_main_banner (
+                name ,
+                contents ,
+                link_url ,
+                order_no ,
+                start_date ,
+                end_date ,
+                status ,
+                reg_id ,
+                reg_dt
+            ) SELECT
+                #{name},
+                #{contents},
+                #{linkUrl},
+                IFNULL(MAX(order_no) + 1, 0),
+                #{startDt},
+                #{endDt},
+                #{status},
+                #{regId},
+                NOW()
+            FROM
+                ank_emoji_main_banner
+            WHERE
+                status != 'D'
+
+        <selectKey resultType="Integer" keyProperty="id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <update id="uploadBannerImageUrl" parameterType="hashMap">
+        /* uploadBannerImageUrl */
+        UPDATE
+            ank_emoji_main_banner
+        SET
+            image_url = #{imageUrl}
+        WHERE
+            id = #{id}
+    </update>
+
+    <update id="reorderBanner" parameterType="ReorderBanner">
+        /* reorderBanner */
+        UPDATE
+            ank_emoji_main_banner
+        SET
+            order_no = #{orderNo} ,
+            upd_id = #{adminId} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+    <insert id="modifyBanner" parameterType="ModifyBanner">
+        /* modifyBanner */
+        UPDATE
+            ank_emoji_main_banner
+        SET
+            name = #{name} ,
+            contents = #{contents} ,
+            image_url = IFNULL(#{imageUrl},image_url) ,
+            link_url = #{linkUrl} ,
+            start_date = #{startDt} ,
+            end_date = #{endDt} ,
+            upd_id = #{updId} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{id}
+    </insert>
+
+    <delete id="updateBannerStatus" parameterType="UpdateBannerStatus">
+        /* updateBannerStatus */
+        UPDATE
+            ank_emoji_main_banner
+        SET
+            status = #{status} ,
+            upd_id = #{adminId} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,847 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.studio.admin.dao.mapper.AgencyAdminUserQueryMapper">
+<!--    <sql id="agencyAdminUserListCondition">-->
+<!--        <if test="searchKeyword != null and searchKeyword != ''">-->
+<!--            AND (agau.name LIKE CONCAT('%', #{searchKeyword}, '%')-->
+<!--            OR agau.email LIKE CONCAT('%', #{searchKeyword}, '%')-->
+<!--            OR agau.phone LIKE CONCAT('%', #{searchKeyword}, '%'))-->
+<!--        </if>-->
+<!--    </sql>-->
+
+<!--    <select id="agencyAdminUserList" parameterType="hashMap" resultType="AgencyAdminUserList">-->
+<!--        /* agencyAdminUserList */-->
+<!--        SELECT-->
+<!--            agau.id ,-->
+<!--            agau.name ,-->
+<!--            agau.phone ,-->
+<!--            agau.email ,-->
+<!--            agau.create_dt AS regDt ,-->
+<!--            agau.update_dt ,-->
+<!--            IFNULL(agag.name, 'ADMIN') AS groupName-->
+<!--        FROM-->
+<!--            ank_game_agency_user agau-->
+<!--        LEFT JOIN-->
+<!--            ank_game_agency_group agag-->
+<!--        ON-->
+<!--            agau.agency_group_id = agag.id-->
+<!--        WHERE-->
+<!--            agau.agency_id = #{agencyId}-->
+<!--            AND del_yn = 'N'-->
+<!--        <include refid="agencyAdminUserListCondition"/>-->
+<!--        <include refid="common.sortAndOrder"/>-->
+<!--        <include refid="common.limitAndOffset"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminUserListCount" parameterType="hashMap" resultType="long">-->
+<!--        /* agencyAdminUserListCount */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_user agau-->
+<!--        LEFT JOIN-->
+<!--            ank_game_agency_group agag-->
+<!--        ON-->
+<!--            agau.agency_group_id = agag.id-->
+<!--        WHERE-->
+<!--            agau.agency_id = #{agencyId}-->
+<!--        <include refid="agencyAdminUserListCondition"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminUserDetail" parameterType="Integer" resultType="AgencyAdminUserDetail">-->
+<!--        /* agencyAdminUserDetail */-->
+<!--        SELECT-->
+<!--            agau.id ,-->
+<!--            agau.name ,-->
+<!--            agau.phone ,-->
+<!--            agau.email ,-->
+<!--            agau.agency_id ,-->
+<!--            agau.agency_group_id AS groupId ,-->
+<!--            aga.name AS agencyName ,-->
+<!--            IFNULL(agag.name, 'Admin') AS groupName ,-->
+<!--            agau.update_dt ,-->
+<!--            agau.create_dt AS regDt-->
+<!--        FROM-->
+<!--            ank_game_agency_user agau-->
+<!--        JOIN-->
+<!--            ank_game_agency aga-->
+<!--        ON-->
+<!--            agau.agency_id = aga.id-->
+<!--        LEFT JOIN-->
+<!--            ank_game_agency_group agag-->
+<!--        ON-->
+<!--            agau.agency_group_id = agag.id-->
+<!--        WHERE-->
+<!--            agau.id = #{adminId}-->
+<!--            AND agau.agency_id = #{agencyId}-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminUserIdByAdminId" parameterType="hashMap" resultType="String">-->
+<!--        /* agencyAdminUserIdByAdminId */-->
+<!--        SELECT-->
+<!--            angkor_user_id-->
+<!--        FROM-->
+<!--            ank_game_agency_user-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND id = #{adminId}-->
+<!--    </select>-->
+
+<!--    &lt;!&ndash; 관리자 계정 생성 &ndash;&gt;-->
+<!--    <insert id="registerAgencyAdminUser" parameterType="RegisterAgencyAdminUser">-->
+<!--        /* registerAgencyAdminUser */-->
+<!--        INSERT INTO-->
+<!--            ank_game_agency_user (-->
+<!--                agency_id ,-->
+<!--                name ,-->
+<!--                password ,-->
+<!--                email ,-->
+<!--                phone ,-->
+<!--                create_dt ,-->
+<!--                agency_group_id-->
+<!--            ) VALUES (-->
+<!--                #{agencyId} ,-->
+<!--                #{name} ,-->
+<!--                #{password} ,-->
+<!--                #{email} ,-->
+<!--                #{phone} ,-->
+<!--                NOW() ,-->
+<!--                IFNULL(#{groupId} , 0)-->
+<!--            )-->
+<!--    </insert>-->
+
+<!--    <select id="checkAgencyInfoValid" parameterType="hashMap" resultType="Integer">-->
+<!--        /* checkAgencyInfoValid */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency aga-->
+<!--        <if test="groupId != null and groupId != 0">-->
+<!--        JOIN-->
+<!--            ank_game_agency_group agag-->
+<!--        ON-->
+<!--            aga.id = agag.agency_id-->
+<!--        </if>-->
+<!--        WHERE-->
+<!--            aga.id = #{agencyId}-->
+<!--            AND aga.del_yn = 'N'-->
+<!--        <if test="groupId != null and groupId != 0">-->
+<!--            AND agag.id = #{groupId}-->
+<!--        </if>-->
+<!--    </select>-->
+
+<!--    <select id="checkAgencyAdminUserExist" parameterType="String" resultType="Integer">-->
+<!--        /* checkAgencyAdminUserExist */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_user-->
+<!--        WHERE-->
+<!--            email = #{email}-->
+<!--            AND del_yn = 'N'-->
+<!--        <if test="id != null">-->
+<!--            AND id != #{id}-->
+<!--        </if>-->
+<!--    </select>-->
+
+<!--    <update id="increaseAgencyAdminUserGroupNumber" parameterType="Integer">-->
+<!--        /* increaseAgencyAdminUserGroupNumber */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_group-->
+<!--        SET-->
+<!--            members = members + 1-->
+<!--        WHERE-->
+<!--            id = #{id}-->
+<!--    </update>-->
+
+<!--    <select id="checkAgencyAdminExist" parameterType="String" resultType="Integer">-->
+<!--        /* checkAgencyAdminExist , 대행사 */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_user-->
+<!--        WHERE-->
+<!--            email = #{email}-->
+<!--            AND id != #{id}-->
+<!--            AND del_yn = 'N'-->
+<!--    </select>-->
+<!--    &lt;!&ndash; 관리자 계정 정보 수정 &ndash;&gt;-->
+<!--    <update id="modifyAgencyAdminUserInfo" parameterType="ModifyAgencyAdminUserInfo">-->
+<!--        /* modifyAgencyAdminUserInfo */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_user-->
+<!--        SET-->
+<!--        <if test="email != null and email != ''">-->
+<!--            email = #{email} ,-->
+<!--        </if>-->
+<!--            name = IFNULL(#{name}, name) ,-->
+<!--            phone = IFNULL(#{phone}, phone) ,-->
+<!--            agency_group_id = IFNULL(#{groupId}, 0) ,-->
+<!--            update_dt = NOW()-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND id = #{id}-->
+<!--    </update>-->
+
+<!--    <update id="decreaseAgencyAdminUserGroupNumber" parameterType="hashMap">-->
+<!--        /* decreaseAgencyAdminUserGroupNumber */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_group agag-->
+<!--        LEFT JOIN-->
+<!--            ank_game_agency_user agau-->
+<!--        ON-->
+<!--            agag.id = agau.agency_group_id-->
+<!--        SET-->
+<!--            agag.members = agag.members - 1-->
+<!--        WHERE-->
+<!--            agau.agency_id = #{agencyId}-->
+<!--            AND agau.id = #{id}-->
+<!--    </update>-->
+
+<!--    <select id="checkAgencyAdminMemberCount" parameterType="Integer" resultType="Integer">-->
+<!--        /* checkAgencyAdminMemberCount */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_user-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND agency_group_id = '0'-->
+<!--            AND del_yn = 'N'-->
+<!--    </select>-->
+
+<!--    <delete id="deleteAgencyAdminUser" parameterType="hashMap">-->
+<!--        /* deleteAgencyAdminUser */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_user-->
+<!--        SET-->
+<!--            del_yn = 'Y' ,-->
+<!--            update_dt = NOW()-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND del_yn = 'N'-->
+<!--            AND id IN <foreach collection="ids" item="id" open="(" close=")" separator=", ">#{id}</foreach>-->
+<!--    </delete>-->
+
+<!--    &lt;!&ndash; 관리자 새 비밀번호 발급 &ndash;&gt;-->
+<!--    <update id="resetAgencyAdminUserPassword" parameterType="hashMap">-->
+<!--        /* resetAgencyAdminUserPassword */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_user-->
+<!--        SET-->
+<!--            password = #{pw} ,-->
+<!--            try_cnt = 0 ,-->
+<!--            update_dt = NOW()-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND id = #{id}-->
+<!--    </update>-->
+
+<!--    &lt;!&ndash; 어드민 그룹 리스트 &ndash;&gt;-->
+<!--    <sql id="agencyAdminGroupListCondition">-->
+<!--        <if test="searchKeyword != null and searchKeyword != ''">-->
+<!--            AND name LIKE CONCAT('%', #{searchKeyword}, '%')-->
+<!--        </if>-->
+<!--    </sql>-->
+
+<!--    <select id="agencyAdminGroupList" parameterType="hashMap" resultType="AgencyAdminGroupList">-->
+<!--        /* agencyAdminGroupList */-->
+<!--        SELECT-->
+<!--            id ,-->
+<!--            name ,-->
+<!--            members ,-->
+<!--            create_dt AS regDt-->
+<!--        FROM-->
+<!--            ank_game_agency_group-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--        <include refid="agencyAdminGroupListCondition"/>-->
+<!--        <include refid="common.sortAndOrder"/>-->
+<!--        <include refid="common.limitAndOffset"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminGroupListCount" parameterType="hashMap" resultType="long">-->
+<!--        /* agencyAdminGroupListCount */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_group-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--        <include refid="agencyAdminGroupListCondition"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminGroupDetail" parameterType="hashMap" resultType="AgencyAdminGroupDetail">-->
+<!--        /* agencyAdminGroupDetail */-->
+<!--        SELECT-->
+<!--            id ,-->
+<!--            name ,-->
+<!--            members ,-->
+<!--            create_dt AS regDt-->
+<!--        FROM-->
+<!--            ank_game_agency_group-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND id = #{id}-->
+<!--    </select>-->
+
+<!--    <select id = "agencyAdminGroupNameList" parameterType="Integer" resultType="AgencyAdminGroupName">-->
+<!--        /* agencyAdminGroupNameList */-->
+<!--        SELECT-->
+<!--            id ,-->
+<!--            name-->
+<!--        FROM-->
+<!--            ank_game_agency_group-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--    </select>-->
+
+<!--    &lt;!&ndash; 관리자 계정 생성 &ndash;&gt;-->
+<!--    <insert id="registerAgencyGroup" parameterType="RegisterAgencyGroup">-->
+<!--        /* registerAgencyGroup */-->
+<!--        INSERT INTO-->
+<!--            ank_game_agency_group (-->
+<!--                agency_id ,-->
+<!--                name ,-->
+<!--                members ,-->
+<!--                create_dt-->
+<!--            ) VALUES (-->
+<!--                #{agencyId} ,-->
+<!--                #{groupName} ,-->
+<!--                '0' ,-->
+<!--                NOW()-->
+<!--            )-->
+<!--    </insert>-->
+
+<!--    <select id="checkAgencyGroupExist" parameterType="hashMap" resultType="Integer">-->
+<!--        /* checkAgencyGroupExist */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_group-->
+<!--        WHERE-->
+<!--            name = #{name}-->
+<!--            AND agency_id = #{agencyId}-->
+<!--    </select>-->
+
+
+<!--    &lt;!&ndash; 대행사 그룹 정보 수정 &ndash;&gt;-->
+<!--    <update id="modifyAgencyGroup" parameterType="ModifyAgencyGroup">-->
+<!--        /* modifyAgencyGroup */-->
+<!--        UPDATE-->
+<!--            ank_game_agency_group-->
+<!--        SET-->
+<!--            name = #{name}-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND id = #{id}-->
+<!--    </update>-->
+
+<!--    <select id="checkAgencyGroupMemberExist" parameterType="hashMap" resultType="Integer">-->
+<!--        /* checkAgencyGroupMemberExist */-->
+<!--        SELECT-->
+<!--            members-->
+<!--        FROM-->
+<!--            ank_game_agency_group-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND id = #{id}-->
+<!--    </select>-->
+
+<!--    <delete id="deleteAgencyGroup" parameterType="hashMap">-->
+<!--        /* deleteAgencyGroup */-->
+<!--        DELETE-->
+<!--        FROM-->
+<!--            ank_game_agency_group-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND id = #{id}-->
+<!--    </delete>-->
+
+<!--    <sql id="agencyAdminGroupCompanyListCondition">-->
+<!--        <if test="searchKeyword != null and searchKeyword != ''">-->
+<!--            AND agc.name LIKE CONCAT('%', #{searchKeyword}, '%')-->
+<!--        </if>-->
+<!--    </sql>-->
+
+<!--    <select id="agencyAdminGroupCompanyList" parameterType="hashMap" resultType="AgencyGroupCompanyList">-->
+<!--        /* agencyAdminGroupCompanyList */-->
+<!--        SELECT-->
+<!--            agc.id ,-->
+<!--            agc.name ,-->
+<!--            agagg.reg_dt ,-->
+<!--            agagg.agency_group_id AS groupId-->
+<!--        FROM-->
+<!--            ank_game_company agc-->
+<!--        JOIN-->
+<!--        (-->
+<!--            SELECT-->
+<!--                company_id ,-->
+<!--                agency_group_id ,-->
+<!--                reg_dt-->
+<!--            FROM-->
+<!--                ank_game_agency_group_game-->
+<!--            WHERE-->
+<!--                agency_id = #{agencyId}-->
+<!--                AND agency_group_id = #{id}-->
+<!--            GROUP BY-->
+<!--                company_id ) agagg-->
+<!--        ON-->
+<!--            agc.id = agagg.company_id-->
+<!--        WHERE-->
+<!--            agc.del_yn = 'N'-->
+<!--        <include refid="agencyAdminGroupCompanyListCondition"/>-->
+<!--        <include refid="common.sortAndOrder"/>-->
+<!--        <include refid="common.limitAndOffset"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminGroupCompanyListCount" parameterType="hashMap" resultType="long">-->
+<!--        /* agencyAdminGroupCompanyListCount */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_company agc-->
+<!--        JOIN-->
+<!--        (-->
+<!--            SELECT-->
+<!--                company_id-->
+<!--            FROM-->
+<!--                ank_game_agency_group_game-->
+<!--            WHERE-->
+<!--                agency_id = #{agencyId}-->
+<!--                AND agency_group_id = #{id}-->
+<!--            GROUP BY-->
+<!--                company_id ) agagg-->
+<!--        ON-->
+<!--            agc.id = agagg.company_id-->
+<!--        WHERE-->
+<!--            agc.del_yn = 'N'-->
+<!--        <include refid="agencyAdminGroupCompanyListCondition"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminCompanyDetail" parameterType="hashMap" resultType="AgencyAdminCompanyDetail">-->
+<!--        /* agencyAdminCompanyDetail */-->
+<!--        SELECT-->
+<!--            agc.id AS companyId ,-->
+<!--            agc.reg_dt ,-->
+<!--            agc.del_yn ,-->
+<!--            agc.name ,-->
+<!--            agc.name_khr ,-->
+<!--            agc.update_dt ,-->
+<!--            agc.country ,-->
+<!--            agc.registration_number ,-->
+<!--            agc.business_start_date ,-->
+<!--            agc.representative_name ,-->
+<!--            agc.address ,-->
+<!--            agc.address_khr ,-->
+<!--            agc.address_detail ,-->
+<!--            agc.address_detail_khr ,-->
+<!--            agc.tax_identification_number ,-->
+<!--            agc.tax_bill_email ,-->
+<!--            agc.bank_info ,-->
+<!--            agc.account_owner ,-->
+<!--            agc.account_number ,-->
+<!--            agc.zip_code ,-->
+<!--            agc.tel_no ,-->
+<!--            agc.fax_no-->
+<!--        FROM-->
+<!--            ank_game_agency_company_info agaci-->
+<!--        JOIN-->
+<!--            ank_game_company agc-->
+<!--        ON-->
+<!--            agaci.company_id = agc.id-->
+<!--        WHERE-->
+<!--            agaci.agency_id = #{agencyId}-->
+<!--            AND agaci.company_id = #{companyId}-->
+<!--            AND agc.del_yn = 'N'-->
+<!--    </select>-->
+
+<!--    &lt;!&ndash; 게임 상세 &ndash;&gt;-->
+<!--    <resultMap id="agencyAdminGroupCompanyDetailMap" type="AgencyAdminGroupCompanyDetail">-->
+<!--        <id column="id" property="id" javaType="Integer"/>-->
+<!--        <result column="companyName" property="companyName" javaType="String"/>-->
+<!--        <result column="groupId" property="groupId" javaType="Integer"/>-->
+<!--        <collection property="gameInfo" ofType="AgencyGameSimpleInfo" javaType="ArrayList">-->
+<!--            <id column="gameId" property="gameId" javaType="Integer"/>-->
+<!--            <result column="thumbnail" property="thumbnail" javaType="String"/>-->
+<!--            <result column="name" property="name" javaType="String"/>-->
+<!--            <result column="subCategory" property="subCategory" javaType="String"/>-->
+<!--            <result column="status" property="status" javaType="String"/>-->
+<!--        </collection>-->
+<!--    </resultMap>-->
+
+<!--    <select id="agencyAdminGroupCompanyDetail" parameterType="hashMap" resultMap="agencyAdminGroupCompanyDetailMap">-->
+<!--        /* agencyAdminGroupCompanyDetail */-->
+<!--        SELECT-->
+<!--            agc.id,-->
+<!--            agc.name AS companyName,-->
+<!--            agagg.agency_group_id AS groupId,-->
+<!--            ag.id AS gameId ,-->
+<!--            ag.name,-->
+<!--            ag.game_sub_category AS subCategory,-->
+<!--            ag.state AS status,-->
+<!--            agf.file_path AS thumbnail-->
+<!--        FROM-->
+<!--            ank_game_agency_group_game agagg-->
+<!--        JOIN-->
+<!--            ank_game_company agc-->
+<!--        ON-->
+<!--            agc.id = agagg.company_id-->
+<!--            AND agc.del_yn = 'N'-->
+<!--        LEFT JOIN-->
+<!--            ank_game ag-->
+<!--        ON-->
+<!--            ag.id = agagg.game_id-->
+<!--            AND ag.del_yn = 'N'-->
+<!--        LEFT JOIN-->
+<!--            ank_game_file agf-->
+<!--        ON-->
+<!--            ag.id = agf.ank_game_id-->
+<!--            AND file_area = #{fileArea}-->
+<!--        WHERE-->
+<!--            agagg.agency_group_id = #{id}-->
+<!--            AND agagg.agency_id = #{agencyId}-->
+<!--            AND agagg.company_id = #{companyId}-->
+<!--    </select>-->
+
+<!--    <select id="checkIsManagingAllGameGroup" parameterType="hashMap" resultType="Integer">-->
+<!--        /* getMasterGameInfo */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_group_game-->
+<!--        WHERE-->
+<!--            agency_group_id = #{id}-->
+<!--            AND agency_id = #{agencyId}-->
+<!--            AND company_id = #{companyId}-->
+<!--            AND game_id = 0-->
+<!--    </select>-->
+
+<!--    <select id = "agencyGroupUnregisteredCompanyNameList" parameterType="hashMap" resultType="AgencyGroupCompanyNameList">-->
+<!--        /* agencyGroupUnregisteredCompanyNameList */-->
+<!--        SELECT-->
+<!--            agc.id ,-->
+<!--            agc.name-->
+<!--            FROM-->
+<!--            ank_game_company agc-->
+<!--        JOIN-->
+<!--            ank_game_agency_company_info agaci-->
+<!--        ON-->
+<!--            agc.id = agaci.company_id-->
+<!--        WHERE-->
+<!--            agc.del_yn = 'N'-->
+<!--            AND agaci.agency_id = #{agencyId}-->
+<!--            AND agaci.company_id NOT IN (SELECT company_id FROM ank_game_agency_group_game WHERE agency_id = #{agencyId} AND agency_group_id = #{id})-->
+<!--    </select>-->
+
+<!--    &lt;!&ndash; 그룹에 게임사, 게임 할당 &ndash;&gt;-->
+<!--    <insert id="registerAgencyGroupCompany" parameterType="RegisterAgencyGroupCompany">-->
+<!--        /* registerAgencyGroupCompany */-->
+<!--        INSERT INTO-->
+<!--            ank_game_agency_group_game (-->
+<!--                agency_group_id,-->
+<!--                agency_id,-->
+<!--                company_id,-->
+<!--                game_id,-->
+<!--                reg_dt-->
+<!--            ) VALUES-->
+<!--        <foreach collection="gameIds" item="id" separator=",">-->
+<!--            (#{groupId}, #{agencyId}, #{companyId}, #{id}, NOW())-->
+<!--        </foreach>-->
+<!--    </insert>-->
+
+<!--    <select id="checkAgencyGroupAllGame" parameterType="hashMap" resultType="Integer">-->
+<!--        /* checkAgencyGroupAllGame */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_group_game-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND agency_group_id = #{id}-->
+<!--            AND company_id = #{companyId}-->
+<!--            AND game_id = 0-->
+<!--    </select>-->
+
+<!--    <delete id="deleteAgencyGroupCompany" parameterType="hashMap">-->
+<!--        /* deleteAgencyGroupCompany */-->
+<!--        DELETE-->
+<!--        FROM-->
+<!--            ank_game_agency_group_game-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND agency_group_id = #{id}-->
+<!--            AND company_id = #{companyId}-->
+<!--    </delete>-->
+
+<!--    <sql id="agencyAdminGroupGameListCondition">-->
+<!--        <if test="searchKeyword != null and searchKeyword != ''">-->
+<!--            AND ag.name LIKE CONCAT('%', #{searchKeyword}, '%')-->
+<!--        </if>-->
+<!--    </sql>-->
+
+<!--    <select id="agencyAdminGroupGameList" parameterType="hashMap" resultType="AgencyGameList">-->
+<!--        /* agencyAdminGroupGameList */-->
+<!--        SELECT-->
+<!--            ag.id AS gameId ,-->
+<!--            ag.name AS gameName ,-->
+<!--            ag.game_category ,-->
+<!--            ag.game_sub_category AS subCategory ,-->
+<!--            ag.direction ,-->
+<!--            ag.state AS status ,-->
+<!--            ag.release_dt ,-->
+<!--            agf.file_path AS gameThumb ,-->
+<!--            aga.id AS agencyId ,-->
+<!--            aga.name AS agencyName ,-->
+<!--            agc.id AS companyId ,-->
+<!--            agc.name AS companyName-->
+<!--        FROM-->
+<!--            ank_game ag-->
+<!--        <choose>-->
+<!--            <when test="cnt == 0 and registered == true">-->
+<!--            JOIN (-->
+<!--                SELECT-->
+<!--                    game_id,-->
+<!--                    agency_id,-->
+<!--                    agency_group_id,-->
+<!--                    company_id-->
+<!--                FROM-->
+<!--                    ank_game_agency_group_game-->
+<!--                WHERE-->
+<!--                    agency_id = #{agencyId}-->
+<!--                    AND agency_group_id = #{id}-->
+<!--                    AND company_id = #{companyId} ) agagg-->
+<!--            ON-->
+<!--                ag.id = agagg.game_id-->
+<!--            </when>-->
+<!--            <otherwise>-->
+<!--                JOIN (-->
+<!--                    SELECT-->
+<!--                        game_id,-->
+<!--                        agency_id,-->
+<!--                        company_id-->
+<!--                    FROM-->
+<!--                        ank_game_agency_game_info-->
+<!--                    WHERE-->
+<!--                        agency_id = #{agencyId}-->
+<!--                        AND company_id = #{companyId} ) agagi-->
+<!--                ON-->
+<!--                    ag.id = agagi.game_id-->
+<!--            </otherwise>-->
+<!--        </choose>-->
+<!--        JOIN-->
+<!--            ank_game_file agf-->
+<!--        ON-->
+<!--            ag.id = agf.ank_game_id-->
+<!--            AND agf.file_area = #{fileArea}-->
+<!--        JOIN-->
+<!--            ank_game_company agc-->
+<!--        ON-->
+<!--            ag.ank_game_company_id = agc.id-->
+<!--            AND agc.del_yn = 'N'-->
+<!--        JOIN-->
+<!--            ank_game_agency aga-->
+<!--        ON-->
+<!--            aga.id = #{agencyId}-->
+<!--            AND aga.del_yn = 'N'-->
+<!--        WHERE-->
+<!--            ag.del_yn = 'N'-->
+<!--        <if test="registered != true">-->
+<!--            AND ag.id NOT IN (SELECT game_id FROM ank_game_agency_group_game WHERE agency_id = #{agencyId} AND agency_group_id = #{id} AND company_id = #{companyId})-->
+<!--        </if>-->
+<!--        <include refid="agencyAdminGroupGameListCondition"/>-->
+<!--        <include refid="common.sortAndOrder"/>-->
+<!--        <include refid="common.limitAndOffset"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyAdminGroupGameListCount" parameterType="hashMap" resultType="long">-->
+<!--        /* agencyAdminGroupGameListCount */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game ag-->
+<!--        <choose>-->
+<!--            <when test="cnt == 0 and registered == true">-->
+<!--                JOIN (-->
+<!--                    SELECT-->
+<!--                        game_id,-->
+<!--                        agency_id,-->
+<!--                        agency_group_id,-->
+<!--                        company_id-->
+<!--                    FROM-->
+<!--                        ank_game_agency_group_game-->
+<!--                    WHERE-->
+<!--                        agency_id = #{agencyId}-->
+<!--                        AND agency_group_id = #{id}-->
+<!--                        AND company_id = #{companyId} ) agagg-->
+<!--                ON-->
+<!--                    ag.id = agagg.game_id-->
+<!--            </when>-->
+<!--            <otherwise>-->
+<!--                JOIN (-->
+<!--                    SELECT-->
+<!--                        game_id,-->
+<!--                        agency_id,-->
+<!--                        company_id-->
+<!--                    FROM-->
+<!--                        ank_game_agency_game_info-->
+<!--                    WHERE-->
+<!--                        agency_id = #{agencyId}-->
+<!--                        AND company_id = #{companyId} ) agagi-->
+<!--                ON-->
+<!--                    ag.id = agagi.game_id-->
+<!--            </otherwise>-->
+<!--        </choose>-->
+<!--        JOIN-->
+<!--            ank_game_file agf-->
+<!--        ON-->
+<!--            ag.id = agf.ank_game_id-->
+<!--            AND agf.file_area = #{fileArea}-->
+<!--        JOIN-->
+<!--            ank_game_company agc-->
+<!--        ON-->
+<!--            ag.ank_game_company_id = agc.id-->
+<!--            AND agc.del_yn = 'N'-->
+<!--        JOIN-->
+<!--            ank_game_agency aga-->
+<!--        ON-->
+<!--            aga.id = #{agencyId}-->
+<!--            AND aga.del_yn = 'N'-->
+<!--        WHERE-->
+<!--            ag.del_yn = 'N'-->
+<!--        <if test="registered != true">-->
+<!--            AND ag.id NOT IN (SELECT game_id FROM ank_game_agency_group_game WHERE agency_id = #{agencyId} AND agency_group_id = #{id} AND company_id = #{companyId})-->
+<!--        </if>-->
+<!--        <include refid="agencyAdminGroupGameListCondition"/>-->
+<!--    </select>-->
+
+<!--    <select id="agencyCheckDuplicateCompany" parameterType="hashMap" resultType="Integer">-->
+<!--        /* agencyCheckDuplicateCompany */-->
+<!--        SELECT-->
+<!--            id-->
+<!--        FROM-->
+<!--            ank_game_company-->
+<!--        WHERE-->
+<!--            country = #{country}-->
+<!--            AND registration_number = #{registrationNumber}-->
+<!--            AND del_yn = 'N'-->
+<!--        <if test="id != null">-->
+<!--            AND id != #{id}-->
+<!--        </if>-->
+<!--    </select>-->
+
+<!--    <insert id="agencyCreateAgencyCompany" parameterType="AgencyRegisterCompany">-->
+<!--        /* agencyCreateAgencyCompany */-->
+<!--        INSERT INTO-->
+<!--            ank_game_company (-->
+<!--                name ,-->
+<!--                name_khr ,-->
+<!--                representative_name ,-->
+<!--                address ,-->
+<!--                address_khr ,-->
+<!--                address_detail ,-->
+<!--                address_detail_khr ,-->
+<!--                tax_identification_number ,-->
+<!--                tax_bill_email ,-->
+<!--                bank_info ,-->
+<!--                account_owner ,-->
+<!--                account_number ,-->
+<!--                zip_code ,-->
+<!--                tel_no ,-->
+<!--                fax_no ,-->
+<!--                del_yn ,-->
+<!--                last_update_admin ,-->
+<!--                update_agency_id ,-->
+<!--                reg_dt-->
+<!--            ) VALUES (-->
+<!--                #{name} ,-->
+<!--                #{nameKhr} ,-->
+<!--                #{representativeName} ,-->
+<!--                #{address} ,-->
+<!--                #{addressKhr} ,-->
+<!--                #{addressDetail} ,-->
+<!--                #{addressDetailKhr} ,-->
+<!--                #{taxIdentificationNumber} ,-->
+<!--                #{taxBillEmail} ,-->
+<!--                #{bankInfo} ,-->
+<!--                #{accountOwner} ,-->
+<!--                #{accountNumber} ,-->
+<!--                #{zipCode} ,-->
+<!--                #{telNo} ,-->
+<!--                #{faxNo} ,-->
+<!--                'N' ,-->
+<!--                #{lastUpdateAdmin} ,-->
+<!--                #{agencyId} ,-->
+<!--                NOW()-->
+<!--            )-->
+
+<!--        <selectKey resultType="Integer" keyProperty="id" order="AFTER">-->
+<!--            SELECT LAST_INSERT_ID()-->
+<!--        </selectKey>-->
+<!--    </insert>-->
+
+<!--    <select id="agencyCheckDuplicateCompanyByName" parameterType="hashMap" resultType="Integer">-->
+<!--        /* agencyCheckDuplicateCompanyByName */-->
+<!--        SELECT-->
+<!--            id-->
+<!--        FROM-->
+<!--            ank_game_company-->
+<!--        WHERE-->
+<!--            (name = #{name} or name_khr = #{nameKhr})-->
+<!--            AND del_yn = 'N'-->
+<!--        <if test="id != null">-->
+<!--            AND id != #{id}-->
+<!--        </if>-->
+<!--    </select>-->
+
+<!--    <select id="checkCompanyRegisteredToAgency" parameterType="hashMap" resultType="Integer">-->
+<!--        /* checkCompanyRegisteredToAgency */-->
+<!--        SELECT-->
+<!--            COUNT(*)-->
+<!--        FROM-->
+<!--            ank_game_agency_company_info-->
+<!--        WHERE-->
+<!--            agency_id = #{agencyId}-->
+<!--            AND company_id = #{companyId}-->
+<!--    </select>-->
+
+<!--    <insert id="agencyRegisterAgencyCompany" parameterType="hashMap">-->
+<!--        /* agencyRegisterAgencyCompany */-->
+<!--        INSERT INTO-->
+<!--            ank_game_agency_company_info (-->
+<!--                agency_id ,-->
+<!--                company_id-->
+<!--            ) VALUES (-->
+<!--                #{agencyId} ,-->
+<!--                #{companyId}-->
+<!--            )-->
+<!--    </insert>-->
+
+<!--    <update id="agencyAdminModifyCompanyInfo" parameterType="AgencyAdminModifyCompany">-->
+<!--        /* agencyAdminModifyCompanyInfo */-->
+<!--        UPDATE-->
+<!--            ank_game_company-->
+<!--        SET-->
+<!--            name = #{name} ,-->
+<!--            name_khr = #{nameKhr} ,-->
+<!--            representative_name = #{representativeName} ,-->
+<!--            address = #{address} ,-->
+<!--            address_khr = #{addressKhr} ,-->
+<!--            address_detail = #{addressDetail} ,-->
+<!--            address_detail_khr = #{addressDetailKhr} ,-->
+<!--            tax_identification_number = #{taxIdentificationNumber} ,-->
+<!--            tax_bill_email = #{taxBillEmail} ,-->
+<!--            bank_info = #{bankInfo} ,-->
+<!--            account_owner = #{accountOwner} ,-->
+<!--            account_number = #{accountNumber} ,-->
+<!--            zip_code = #{zipCode} ,-->
+<!--            tel_no = #{telNo} ,-->
+<!--            fax_no = #{faxNo} ,-->
+<!--            last_update_admin = #{lastUpdateAdmin} ,-->
+<!--            update_agency_id = #{agencyId} ,-->
+<!--            update_dt =  NOW()-->
+<!--        WHERE-->
+<!--            id = #{companyId}-->
+<!--    </update>-->
+</mapper>

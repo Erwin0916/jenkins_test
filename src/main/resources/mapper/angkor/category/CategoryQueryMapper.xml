@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.category.dao.mapper.CategoryQueryMapper">
+    <sql id="categoryListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND aemc.category_name LIKE CONCAT('%', #{searchKeyword}, '%')
+        </if>
+        <if test="categoryType != null and categoryType != ''">
+            AND aemc.category_type = #{categoryType}
+        </if>
+        <if test="status != null and status != ''">
+            AND aem.status = #{status}
+        </if>
+    </sql>
+
+    <select id="categoryList" parameterType="hashMap" resultType="CategoryList">
+        /* categoryList */
+        SELECT
+            aemc.id ,
+            aemc.category_type ,
+            aemc.category_name ,
+            aemc.contents ,
+            aemc.order_no AS orderNo,
+            aem.id AS categoryMainId ,
+            aem.reg_dt ,
+            aem.status
+        FROM
+            ank_emoji_main_category aemc
+        JOIN
+            ank_emoji_main aem
+        ON
+            aemc.id = aem.category_id
+        WHERE
+            aem.status != 'D'
+            AND aemc.del_yn = 'N'
+        <include refid="categoryListCondition"/>
+        ORDER BY
+            orderNo
+    </select>
+
+    <select id="categoryDetail" parameterType="Integer" resultType="CategoryDetail">
+        /* categoryDetail */
+        SELECT
+            aemc.id ,
+            aemc.category_type ,
+            aemc.category_name ,
+            aemc.contents ,
+            aemc.order_no ,
+            aem.id AS categoryMainId ,
+            aem.reg_id ,
+            aem.reg_dt ,
+            aem.upd_id ,
+            aem.upd_dt ,
+            aem.status ,
+            aem.start_date AS startDt ,
+            aem.end_date AS endDt
+        FROM
+            ank_emoji_main_category aemc
+        JOIN
+            ank_emoji_main aem
+        ON
+            aemc.id = aem.category_id
+        WHERE
+            aemc.id = #{id}
+    </select>
+
+    <select id="checkCategoryNameDuplicate" parameterType="hashMap" resultType="Integer">
+        /* checkCategoryNameDuplicate */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_main_category
+        WHERE
+            category_name = #{name}
+            AND category_type = #{categoryType}
+            AND del_yn = 'N'
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+    <insert id="registerCategory" parameterType="RegisterCategory">
+        /* registerCategory */
+        INSERT INTO
+            ank_emoji_main_category (
+                category_type ,
+                category_name ,
+                contents ,
+                order_no ,
+                reg_id ,
+                reg_dt
+            ) SELECT
+                #{categoryType},
+                #{categoryName},
+                #{contents},
+                IFNULL(MAX(order_no) + 1, 0),
+                #{regId},
+                NOW()
+            FROM
+                ank_emoji_main_category
+            WHERE
+                del_yn = 'N'
+                AND category_type = #{categoryType}
+
+        <selectKey resultType="Integer" keyProperty="id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <insert id="registerCategoryInfo" parameterType="hashMap">
+        /* registerCategoryInfo */
+        INSERT INTO
+            ank_emoji_main (
+                category_id ,
+                start_date ,
+                end_date ,
+                reg_id ,
+                reg_dt
+            ) VALUES (
+                #{id} ,
+                #{startDt} ,
+                #{endDt} ,
+                #{adminId} ,
+                NOW()
+            )
+    </insert>
+
+    <update id="modifyCategory" parameterType="ModifyCategory">
+        /* modifyCategory */
+        UPDATE
+            ank_emoji_main_category aemc
+        JOIN
+            ank_emoji_main aem
+        ON
+            aemc.id = aem.category_id
+        SET
+            aemc.category_name = #{categoryName} ,
+            aemc.contents = #{contents} ,
+            aemc.upd_id = #{updId} ,
+            aemc.upd_dt = NOW() ,
+            aem.start_date = #{startDt} ,
+            aem.end_date = #{endDt} ,
+            aem.upd_id = #{updId} ,
+            aem.upd_dt = NOW()
+        WHERE
+            aemc.id = #{id}
+    </update>
+
+    <update id="reorderCategory" parameterType="ReorderCategory">
+        /* reorderCategory */
+        UPDATE
+            ank_emoji_main_category
+        SET
+            order_no = #{orderNo} ,
+            upd_id = #{adminId} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+    <delete id="updateCategoryStatus" parameterType="UpdateCategoryStatus">
+        /* updateCategoryStatus */
+        UPDATE
+            ank_emoji_main_category aemc
+        JOIN
+            ank_emoji_main aem
+        ON
+            aemc.id = aem.category_id
+        SET
+            aemc.del_yn = IFNULL(#{delYn},aemc.del_yn) ,
+            aemc.upd_id = #{adminId} ,
+            aemc.upd_dt = NOW() ,
+            aem.status = #{status} ,
+            aem.upd_id = #{adminId} ,
+            aem.upd_dt = NOW()
+        WHERE
+            aemc.id = #{id}
+            AND aem.status != 'D'
+            AND aemc.del_yn = 'N'
+    </delete>
+
+    <sql id="categoryEmojiListCondition">
+        <if test="tag != null and tag != ''">
+            AND aeh.hashtag = #{tag}
+        </if>
+    </sql>
+
+    <select id="categoryEmojiList" parameterType="hashMap" resultType="CategoryRegisteredEmojiList">
+        /* categoryEmojiList */
+        SELECT
+            IFNULL(aem.main_moving_image_url,aem.main_image_url) AS mainImageUrl ,
+            aem.id AS emojiId ,
+            aem.name_en AS name ,
+            aeme.order_no AS orderNo
+        FROM
+            ank_emoji_main_emoji aeme
+        JOIN
+            ank_emoji_master aem
+        ON
+            aeme.emoji_id = aem.id
+    <if test="tag != null and tag != ''">
+        LEFT JOIN
+            ank_emoji_artist_hashtag aeah
+        ON
+            aem.artist_emoji_id = aeah.emoji_id
+        LEFT JOIN
+            ank_emoji_hashtag aeh
+        ON
+            aeah.hashtag_id = aeh.id
+    </if>
+        WHERE
+            aeme.main_id = #{id}
+            AND aem.status IN('002001', '002002')
+        <include refid="categoryEmojiListCondition"/>
+        ORDER BY
+            orderNo
+    </select>
+
+    <select id="categoryEmojiListCount" parameterType="Integer" resultType="long">
+        /* categoryEmojiListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_main_emoji aeme
+        JOIN
+            ank_emoji_master aem
+        ON
+            aeme.emoji_id = aem.id
+    <if test="tag != null and tag != ''">
+        LEFT JOIN
+            ank_emoji_artist_hashtag aeah
+        ON
+            aem.artist_emoji_id = aeah.emoji_id
+        LEFT JOIN
+            ank_emoji_hashtag aeh
+        ON
+            aeah.hashtag_id = aeh.id
+    </if>
+        WHERE
+            aeme.main_id = #{id}
+            AND aem.status IN('002001', '002002')
+        <include refid="categoryEmojiListCondition"/>
+    </select>
+
+    <select id="categoryUnregisteredEmojiList" parameterType="hashMap" resultType="CategoryEmojiList">
+        /* categoryUnregisteredEmojiList */
+        SELECT
+            IFNULL(aem.main_moving_image_url,aem.main_image_url) AS mainImageUrl ,
+            aem.id AS emojiId ,
+            aem.name_en AS name
+        FROM
+            ank_emoji_master aem
+    <if test="tag != null and tag != ''">
+        LEFT JOIN
+            ank_emoji_artist_hashtag aeah
+        ON
+            aem.artist_emoji_id = aeah.emoji_id
+        LEFT JOIN
+            ank_emoji_hashtag aeh
+        ON
+            aeah.hashtag_id = aeh.id
+    </if>
+        WHERE
+            aem.status IN('002001', '002002')
+            AND aem.emoji_type != 'D'
+            AND aem.id NOT IN (SELECT emoji_id FROM ank_emoji_main_emoji WHERE main_id = #{id})
+        <include refid="categoryEmojiListCondition"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="categoryUnregisteredEmojiListCount" parameterType="hashMap" resultType="long">
+        /* categoryUnregisteredEmojiListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_master aem
+    <if test="tag != null and tag != ''">
+        LEFT JOIN
+            ank_emoji_artist_hashtag aeah
+        ON
+            aem.artist_emoji_id = aeah.emoji_id
+        LEFT JOIN
+            ank_emoji_hashtag aeh
+        ON
+            aeah.hashtag_id = aeh.id
+    </if>
+        WHERE
+            aem.status IN('002001', '002002')
+            AND aem.emoji_type != 'D'
+            AND aem.id NOT IN (SELECT emoji_id FROM ank_emoji_main_emoji WHERE main_id = #{id})
+        <include refid="categoryEmojiListCondition"/>
+    </select>
+
+    <insert id="registerEmojiToCategory" parameterType="RegisterEmojiToCategory">
+        /* registerEmojiToCategory */
+        <selectKey resultType="int" keyProperty="orderNo" order="BEFORE">
+            SELECT
+                IFNULL(MAX(order_no)+1,0)
+            FROM
+                ank_emoji_main_emoji
+            WHERE
+                main_id = #{categoryMainId}
+        </selectKey>
+
+        INSERT INTO
+            ank_emoji_main_emoji (
+                main_id ,
+                emoji_id ,
+                order_no
+            ) VALUES
+        <foreach collection="emojiIds" item="emojiId" index="index" separator=",">
+            (
+                #{categoryMainId},
+                #{emojiId} ,
+                #{orderNo} + ${index}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="registerEmojiToCategoryLog" parameterType="Integer">
+        /* registerEmojiToCategoryLog */
+        INSERT INTO
+            ank_emoji_main_emoji_log (
+                main_emoji_id ,
+                emoji_id ,
+                order_no ,
+                save_dt
+            ) SELECT
+                id ,
+                emoji_id ,
+                order_no ,
+                NOW()
+            FROM
+                ank_emoji_main_emoji
+            WHERE
+                main_id = #{id}
+    </insert>
+
+    <update id="reorderCategoryEmoji" parameterType="ReorderCategoryEmoji">
+        /* reorderCategoryEmoji */
+        UPDATE
+            ank_emoji_main_emoji
+        SET
+            order_no = #{orderNo}
+        WHERE
+            main_id = #{id}
+            AND emoji_id = #{emojiId}
+    </update>
+
+    <delete id="deleteEmojiFromCategory" parameterType="hashMap">
+        /* deleteEmojiFromCategory */
+        DELETE
+        FROM
+            ank_emoji_main_emoji
+        WHERE
+            main_id = #{id}
+            AND emoji_id IN <foreach collection="emojiIds" item="id" open="(" close=")" separator=", ">#{id}</foreach>
+    </delete>
+</mapper>

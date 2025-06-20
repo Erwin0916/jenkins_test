@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.artist.dao.mapper.CmsArtistQueryMapper">
+    <sql id="emojiArtistListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (name_en LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR name_kh  LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </sql>
+
+    <select id="emojiArtistList" parameterType="hashMap" resultType="ArtistListDto">
+        /* emojiArtistList */
+        SELECT
+            id ,
+            name_en AS nameEn ,
+            email ,
+            status ,
+            reg_dt
+        FROM
+            ank_emoji_artist
+        WHERE
+            status != '3'
+        <include refid="emojiArtistListCondition"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="emojiArtistListCount" parameterType="hashMap" resultType="long">
+        /* emojiArtistListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_artist
+        WHERE
+            status != '3'
+        <include refid="emojiArtistListCondition"/>
+    </select>
+
+    <resultMap id="artistDetailMap" type="com.angkorchat.emoji.cms.domain.angkor.artist.dto.response.ArtistDetail">
+        <id column="id" property="id" />
+        <result column="nameEn" property="nameEn" />
+        <result column="nameKm" property="nameKm" />
+        <result column="angkorId" property="angkorId" />
+        <result column="email" property="email" />
+        <result column="phone" property="phone" />
+        <result column="phoneNumber" property="phoneNumber" />
+        <result column="phoneCode" property="phoneCode" />
+        <result column="baseAddress" property="baseAddress" />
+        <result column="detailAddress" property="detailAddress" />
+        <result column="accountNumber" property="accountNumber" />
+        <result column="accountOwner" property="accountOwner" />
+        <result column="bankName" property="bankName" />
+        <result column="commission" property="commission" />
+        <result column="status" property="status" />
+        <result column="statusReason" property="statusReason" />
+        <result column="regId" property="regId" />
+        <result column="regDt" property="regDt" />
+        <result column="updDt" property="updDt" />
+    </resultMap>
+
+    <select id="emojiArtistDetail" parameterType="Integer" resultMap="artistDetailMap">
+        /* emojiArtistDetail */
+        SELECT
+            id ,
+            name_en AS nameEn ,
+            name_kh AS nameKm ,
+            angkorid AS angkorId ,
+            email ,
+            phone ,
+            phonenumber AS phoneNumber ,
+            phonecode AS phoneCode ,
+            base_address AS baseAddress ,
+            detail_address AS detailAddress ,
+            account_number AS accountNumber ,
+            account_owner AS accountOwner ,
+            bank_name AS bankName ,
+            commission ,
+            status ,
+            status_reason AS statusReason ,
+            reg_id AS regId ,
+            reg_dt AS regDt ,
+            upd_dt AS updDt
+        FROM
+            ank_emoji_artist
+        WHERE
+            id = #{id}
+    </select>
+
+    <sql id="artistEmojiListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (aaem.name_en LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR aaem.name_kh  LIKE CONCAT('%', #{searchKeyword}, '%'))
+        </if>
+        <if test="status != null and status != ''">
+            AND aaem.status = #{status}
+        </if>
+    </sql>
+
+    <select id="artistEmojiList" parameterType="hashMap" resultType="ArtistEmojiListDto">
+        /* artistEmojiList */
+        SELECT
+            aaem.id ,
+            aaem.name_en AS emojiName ,
+            aaem.point AS price ,
+            IFNULL(aaem.main_moving_image_url,aaem.main_image_url) AS mainImageUrl ,
+            aaem.status ,
+            aaem.reg_dt AS regDt ,
+            aea.id As artistId,
+            aea.name_en AS artistName
+        FROM
+            ank_artist_emoji_master aaem
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaem.artist_id = aea.id
+        WHERE
+            aaem.artist_id = #{artistId}
+        <include refid="artistEmojiListCondition"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="cmsArtistAccountInfo" parameterType="hashMap" resultType="ArtistAccountInfo">
+        /* cmsArtistAccountInfo */
+        SELECT
+            aaa.amount AS availableEarning,
+            aaa.complete_amount AS completedEarning,
+            aes.total_amount AS estimatedEarning
+        FROM
+            ank_artist_account aaa
+        JOIN (
+            SELECT
+                artist_id,
+                SUM(total_amount) AS total_amount
+            FROM
+                ank_emoji_settlement
+            WHERE
+                stat_date >= CONCAT(#{statDate},'01')
+                AND stat_date <![CDATA[<=]]> CONCAT(#{statDate},'31')
+            GROUP BY
+                artist_id
+        ) aes
+        ON
+            aaa.artist_id = aes.artist_id
+        WHERE
+            aaa.artist_id = #{id}
+    </select>
+
+    <select id="artistEmojiListCount" parameterType="hashMap" resultType="long">
+        /* artistEmojiListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_artist_emoji_master aaem
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaem.artist_id = aea.id
+        WHERE
+            aaem.artist_id = #{artistId}
+        <include refid="artistEmojiListCondition"/>
+    </select>
+
+    <select id="cmsArtistSettlementRequestList" parameterType="hashMap" resultType="ArtistSettlementRequestList">
+        /* cmsArtistSettlementRequestList */
+        SELECT
+            amount ,
+            reg_dt As  applicationDt ,
+            DATE_ADD(reg_dt, INTERVAL 7 DAY) AS scheduledDt ,
+            amount/10 AS tax ,
+            issue_status AS paymentStatus
+        FROM
+            ank_artist_account_settlement_request
+        WHERE
+            artist_id = #{artistId}
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="cmsArtistSettlementRequestListCount" parameterType="Integer" resultType="long">
+        /* cmsArtistSettlementRequestListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_artist_account_settlement_request
+        WHERE
+            artist_id = #{artistId}
+    </select>
+
+    <select id="checkArtistAccountExist" parameterType="Integer" resultType="Integer">
+        /* checkArtistAccountExist */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_artist_account
+        WHERE
+            artist_id = #{artistId}
+    </select>
+
+    <update id="updateArtistBankInfo" parameterType="RegisterArtistAccount">
+        /* updateArtistBankInfo */
+        UPDATE
+            ank_emoji_artist
+        SET
+            account_number = #{accountNumber} ,
+            bank_name = #{bankName} ,
+            account_owner = #{accountOwner} ,
+            upd_id = #{adminId} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{artistId}
+    </update>
+
+    <insert id="registerArtistAccount" parameterType="Integer">
+        /* registerArtistAccount */
+        INSERT INTO
+            ank_artist_account (
+                artist_id,
+                amount ,
+                complete_amount,
+                reg_dt
+            ) VALUES (
+                #{artistId} ,
+                0 ,
+                0 ,
+                NOW()
+            )
+    </insert>
+</mapper>

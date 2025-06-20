@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.code.dao.mapper.CodeQueryMapper">
+    <!-- 메이저 코드 목록 조회 -->
+    <sql id="majorListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND code_value LIKE CONCAT('%', #{searchKeyword}, '%')
+        </if>
+    </sql>
+
+    <select id="majorList" parameterType="hashMap" resultType="MajorList">
+        /* majorList */
+        SELECT
+            major ,
+            code_value AS majorName
+        FROM
+            ank_emoji_code
+        WHERE
+            del_yn = 'N'
+            <include refid="majorListCondition"/>
+        GROUP BY
+            major
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="majorListCount" parameterType="String" resultType="long">
+        /* majorListCount */
+        SELECT
+            COUNT(DISTINCT major)
+        FROM
+            ank_emoji_code
+        WHERE
+            del_yn = 'N'
+        <include refid="majorListCondition"/>
+    </select>
+
+    <!-- 공통 코드 리스트 -->
+    <sql id="codeListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND code_en LIKE CONCAT('%', #{searchKeyword}, '%')
+        </if>
+    </sql>
+    
+    <select id="codeList" parameterType="hashMap" resultType="CodeList">
+        /* codeList */
+        SELECT
+            code ,
+            code_en ,
+            code_kr ,
+            etc
+        FROM
+            ank_emoji_code
+        WHERE
+            del_yn = 'N'
+            AND major = #{major}
+            <include refid="codeListCondition"/>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="codeListCount" parameterType="hashMap" resultType="long">
+        /* codeListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_code
+        WHERE
+            del_yn = 'N'
+            AND major = #{major}
+            <include refid="codeListCondition"/>
+    </select>
+
+    <!-- 심플 코드 리스트 -->
+    <select id="simpleCodeList" parameterType="String" resultType="SimpleCode">
+        /* simpleCodeList */
+        SELECT
+            code ,
+            code_en AS codeName
+        FROM
+            ank_emoji_code
+        WHERE
+            del_yn = 'N'
+            AND major = #{major}
+    </select>
+
+    <select id="findLastMajor" resultType="String">
+        /* findLastMajor */
+        SELECT
+            LPAD(IFNULL(MAX(major) + 1, '001'), 3, '0')
+        FROM
+            ank_emoji_code
+    </select>
+
+    <select id="findLastMinor" parameterType="String" resultType="LastMinor">
+        /* findLastMinor */
+        SELECT
+            LPAD(IFNULL(MAX(minor) + 1, '001'), 3, '0') AS minor ,
+            code_value AS majorName
+        FROM
+            ank_emoji_code
+        WHERE
+            major = #{major}
+    </select>
+
+    <select id="checkDuplicateCodeName" parameterType="hashMap" resultType="Integer">
+        /* checkDuplicateCodeName */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_emoji_code
+        WHERE
+            code_value = #{name}
+        <if test="major != null">
+            AND major != #{major}
+        </if>
+    </select>
+
+
+    <!-- 코드 추가 -->
+    <insert id="addCode" parameterType="AddCode">
+        /* addCode */
+        INSERT INTO
+            ank_emoji_code (
+                major ,
+                minor ,
+                code ,
+                code_en ,
+                code_kr ,
+        <if test="majorName != null and majorName != ''">code_value ,</if>
+                etc ,
+                del_yn
+            ) VALUES (
+                #{major} ,
+                #{minor} ,
+                #{code} ,
+                #{codeEn} ,
+                #{codeKr} ,
+        <if test="majorName != null and majorName != ''">#{majorName} ,</if>
+                IFNULL(#{etc}, '') ,
+                'N'
+            )
+    </insert>
+
+    <!-- 코드 수정 -->
+    <update id="updateCode" parameterType="UpdateCode">
+        /* updateCode */
+        UPDATE
+            ank_emoji_code
+        SET
+            code_en = #{codeEn} ,
+            code_kr = #{codeKr} ,
+            etc = IFNULL(#{etc},etc)
+        WHERE
+            code = #{code}
+    </update>
+
+    <!-- 메이저 코드 이름 수정 -->
+    <update id="updateMajorName" parameterType="UpdateMajorName">
+        /* updateMajorName */
+        UPDATE
+            ank_emoji_code
+        SET
+            code_value = #{codeValue}
+        WHERE
+            major = #{major}
+    </update>
+
+    <!-- 코드 삭제 -->
+    <delete id="deleteCode" parameterType="String">
+        /* deleteCode */
+        UPDATE
+            ank_emoji_code
+        SET
+            del_yn = 'Y'
+        WHERE
+            code = #{code}
+    </delete>
+</mapper>

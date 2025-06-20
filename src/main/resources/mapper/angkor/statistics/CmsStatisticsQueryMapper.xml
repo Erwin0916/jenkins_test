@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.statistics.dao.mapper.CmsStatisticsQueryMapper">
+    <select id="getArtistStatisticsDaily" resultType="map">
+        /* CmsStatisticsQueryMapper.getArtistStatisticsDaily */
+        WITH
+        RECURSIVE days AS (
+            SELECT 1 AS day
+            UNION ALL
+            SELECT day + 1 FROM days WHERE day <![CDATA[<]]> 31
+        ),
+        -- 대상 데이터 필터링
+        filtered_statistics AS (
+            SELECT
+                   a.name_en AS divName,
+                   DAY(b.stat_date) AS day,
+                   b.point AS amount
+              FROM ank_emoji_artist a, ank_emoji_stat_sales_daily b
+             WHERE a.id = b.artist_id
+        <if test="artistId != null and artistId != ''">
+            AND a.id = #{artistId}
+        </if>
+        <if test="emojiId != null and emojiId != ''">
+            AND b.emoji_id = #{emojiId}
+        </if>
+               AND b.stat_date >= #{yearMonth} * 100 + 1
+               AND b.stat_date <![CDATA[<]]> (#{yearMonth} + 1) * 100 + 1
+        ),
+        aggregated AS (
+            SELECT
+                   divName,
+                   day,
+                   SUM(amount) AS total_amount
+              FROM filtered_statistics
+             GROUP BY divName, day
+        ),
+        names AS (
+            SELECT DISTINCT a.name_en AS divName
+              FROM ank_emoji_artist a, ank_emoji_stat_sales_daily b
+             WHERE a.id = b.artist_id
+        <if test="artistId != null and artistId != ''">
+            AND a.id = #{artistId}
+        </if>
+        <if test="emojiId != null and emojiId != ''">
+            AND b.emoji_id = #{emojiId}
+        </if>
+               AND b.stat_date >= #{yearMonth} * 100 + 1
+               AND b.stat_date <![CDATA[<]]> (#{yearMonth} + 1) * 100 + 1
+        ),
+        grid AS (
+             SELECT
+                    n.divName, d.day
+               FROM names n
+             CROSS JOIN days d
+        ),
+        final_statistics_data AS (
+            SELECT
+                   g.divName,
+                   g.day,
+                   COALESCE(a.total_amount, 0) AS amount
+              FROM grid g
+         LEFT JOIN aggregated a ON g.divName = a.divName AND g.day = a.day
+        )
+        SELECT
+               divName
+               <foreach collection="list" item="i" index="index" separator="">
+                   , MAX(CASE WHEN day = ${i} THEN amount ELSE 0 END) AS day_${i}
+               </foreach>
+          FROM final_statistics_data
+         GROUP BY divName
+         ORDER BY divName
+    </select>
+
+    <select id="getStatisticsDaily" resultType="map">
+        /* CmsStatisticsQueryMapper.getStatisticsDaily */
+        WITH
+        RECURSIVE days AS (
+            SELECT 1 AS day
+            UNION ALL
+            SELECT day + 1 FROM days WHERE day <![CDATA[<]]> 31
+        ),
+        -- 대상 데이터 필터링
+        filtered_statistics AS (
+            SELECT
+                   a.name_en AS divName,
+                   FLOOR(b.stat_date / 100) AS yearMonth,  -- 20250501 -> 202505
+                   MOD(b.stat_date, 100) AS day,
+                   b.point AS amount
+              FROM ank_emoji_artist a, ank_emoji_stat_sales_daily b
+             WHERE a.id = b.artist_id
+        <if test="artistId != null and artistId != ''">
+            AND a.id = #{artistId}
+        </if>
+               AND b.stat_date >= #{startYearMonth} * 100 + 1
+               AND b.stat_date <![CDATA[<]]> (#{endYearMonth} + 1) * 100 + 1
+        ),
+        aggregated AS (
+            SELECT
+                   divName,
+                   yearMonth,
+                   day,
+                   SUM(amount) AS total_amount
+              FROM filtered_statistics
+             GROUP BY divName, yearMonth, day
+        ),
+        names AS (
+            SELECT DISTINCT a.name_en AS divName
+              FROM ank_emoji_artist a, ank_emoji_stat_sales_daily b
+             WHERE a.id = b.artist_id
+        <if test="artistId != null and artistId != ''">
+            AND a.id = #{artistId}
+        </if>
+               AND b.stat_date >= #{startYearMonth} * 100 + 1
+               AND b.stat_date <![CDATA[<]]> (#{endYearMonth} + 1) * 100 + 1
+        ),
+        months AS (
+            SELECT DISTINCT FLOOR(b.stat_date / 100) AS yearMonth
+              FROM ank_emoji_artist a, ank_emoji_stat_sales_daily b
+             WHERE a.id = b.artist_id
+        <if test="artistId != null and artistId != ''">
+            AND a.id = #{artistId}
+        </if>
+               AND b.stat_date >= #{startYearMonth} * 100 + 1
+               AND b.stat_date <![CDATA[<]]> (#{endYearMonth} + 1) * 100 + 1
+        ),
+        grid AS (
+             SELECT
+                    n.divName, m.yearMonth, d.day
+               FROM names n
+             CROSS JOIN months m
+             CROSS JOIN days d
+        ),
+        final_statistics_data AS (
+            SELECT
+                   g.divName,
+                   g.yearMonth,
+                   g.day,
+                   COALESCE(a.total_amount, 0) AS amount
+              FROM grid g
+         LEFT JOIN aggregated a ON g.divName = a.divName AND g.yearMonth = a.yearMonth AND g.day = a.day
+        )
+        SELECT
+               divName,
+               yearMonth,
+               <foreach collection="list" item="i" index="index" separator=",">
+                    MAX(CASE WHEN day = ${i} THEN amount ELSE 0 END) AS day_${i}
+               </foreach>
+          FROM final_statistics_data
+         GROUP BY divName, yearMonth
+         ORDER BY divName, yearMonth
+    </select>
+
+    <select id="getStatisticsMonthly" resultType="map">
+        /* CmsStatisticsQueryMapper.getStatisticsMonthly */
+        WITH
+        filtered_statistics AS (
+            SELECT
+                   a.name_en AS divName,
+                   FLOOR(b.stat_date / 10000) AS year,
+                   FLOOR(b.stat_date / 100) % 100 AS month,
+                   b.point AS amount
+              FROM ank_emoji_artist a, ank_emoji_stat_sales_daily b
+             WHERE a.id = b.artist_id
+        <if test="artistId != null and artistId != ''">
+            AND a.id = #{artistId}
+        </if>
+               AND b.stat_date >= #{startYear} * 10000 + 101
+               AND b.stat_date <![CDATA[<]]> (#{endYear} + 1) * 10000 + 101
+        ),
+        aggregated AS (
+            SELECT
+                   divName,
+                   year,
+                   month,
+                   SUM(amount) AS total_amount
+              FROM filtered_statistics
+             GROUP BY divName, year, month
+        ),
+        names_years AS (
+        SELECT DISTINCT
+               divName,
+               year
+          FROM aggregated
+        ),
+        grid AS (
+             SELECT
+                    ny.divName,
+                    ny.year,
+                    m AS month
+               FROM names_years ny
+               CROSS JOIN (
+                   SELECT 1 AS m UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL
+                   SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL
+                   SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL
+                   SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12
+               ) months
+        ),
+        final_statistics_data AS (
+            SELECT
+                   g.divName,
+                   g.year,
+                   g.month,
+                   COALESCE(a.total_amount, 0) AS amount
+              FROM grid g
+         LEFT JOIN aggregated a ON g.divName = a.divName AND g.year = a.year AND g.month = a.month
+        )
+        SELECT
+               divName,
+               year,
+               MAX(CASE WHEN month = 1 THEN amount ELSE 0 END)  AS month_1,
+               MAX(CASE WHEN month = 2 THEN amount ELSE 0 END)  AS month_2,
+               MAX(CASE WHEN month = 3 THEN amount ELSE 0 END)  AS month_3,
+               MAX(CASE WHEN month = 4 THEN amount ELSE 0 END)  AS month_4,
+               MAX(CASE WHEN month = 5 THEN amount ELSE 0 END)  AS month_5,
+               MAX(CASE WHEN month = 6 THEN amount ELSE 0 END)  AS month_6,
+               MAX(CASE WHEN month = 7 THEN amount ELSE 0 END)  AS month_7,
+               MAX(CASE WHEN month = 8 THEN amount ELSE 0 END)  AS month_8,
+               MAX(CASE WHEN month = 9 THEN amount ELSE 0 END)  AS month_9,
+               MAX(CASE WHEN month = 10 THEN amount ELSE 0 END) AS month_10,
+               MAX(CASE WHEN month = 11 THEN amount ELSE 0 END) AS month_11,
+               MAX(CASE WHEN month = 12 THEN amount ELSE 0 END) AS month_12
+          FROM final_statistics_data
+         GROUP BY divName, year
+         ORDER BY divName, year
+    </select>
+</mapper>

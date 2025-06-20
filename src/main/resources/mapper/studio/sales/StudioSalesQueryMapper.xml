@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.studio.sales.dao.mapper.StudioSalesQueryMapper">
+
+    <resultMap id="studioSalesStatusMap" type="StudioSalesStatus">
+        <result column="totalSalesAmount" property="totalSalesAmount"/>
+        <result column="totalSalesPoint" property="totalSalesPoint"/>
+        <collection property="emojiSales" ofType="SalesByEmoji">
+            <result column="emojiName" property="emojiName"/>
+            <result column="reg_dt" property="regDt"/>
+            <result column="image_type" property="imageType"/>
+            <result column="mainImageUrl" property="mainImageUrl"/>
+            <result column="status" property="status"/>
+            <result column="salesAmount" property="salesAmount"/>
+        </collection>
+    </resultMap>
+
+    <select id="studioSalesStatus" parameterType="Integer" resultMap="studioSalesStatusMap">
+        /* studioSalesStatus */
+        WITH total_stat AS (
+            SELECT
+                SUM(cnt) AS total_cnt,
+                SUM(point) AS total_point
+            FROM
+                ank_emoji_stat_sales_daily
+            WHERE
+                artist_id = #{id}
+        )
+        SELECT
+            aem.name_en AS emojiName,
+            aem.reg_dt,
+            aem.image_type,
+            COALESCE(aem.main_moving_image_url,aem.main_image_url,'') AS mainImageUrl ,
+            aem.status,
+            aem.status,
+            COALESCE(stat.totalCnt, 0) AS salesAmount,
+            COALESCE(ts.total_cnt, 0) AS totalSalesAmount,
+            COALESCE(ts.total_point,0) AS totalSalesPoint
+        FROM
+            ank_emoji_master aem
+        LEFT JOIN (
+            SELECT
+                emoji_id,
+                SUM(cnt) AS totalCnt ,
+                SUM(point) AS totalPoint
+            FROM
+                ank_emoji_stat_sales_daily
+            WHERE
+                artist_id = #{id}
+            GROUP BY
+                emoji_id
+        ) stat
+        ON
+            aem.id = stat.emoji_id
+        JOIN
+            total_stat ts
+        ON
+            1 = 1
+        WHERE
+            aem.artist_id = #{id}
+            AND aem.emoji_type = 'P'
+            AND aem.status IN ('002001', '002002', '002003')
+    </select>
+</mapper>

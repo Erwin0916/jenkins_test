@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.menu.dao.mapper.MenuQueryMapper">
+    <select id="simpleMenuList" parameterType="String" resultType="SimpleMenuList">
+        /* simpleMenuList */
+        WITH RECURSIVE menu AS (
+            SELECT
+                id ,
+                parent_id AS parentId ,
+                menu_name AS menuName ,
+                menu_link AS menuLink ,
+                menu_folder AS menuFolder ,
+                menu_file AS menuFile ,
+                menu_icon AS menuIcon ,
+                display_order AS displayOrder ,
+                1 AS depth ,
+                CAST(LPAD(display_order, 2, '0') AS CHAR(16)) AS path
+            FROM
+                ank_emoji_admin_menu
+            WHERE
+                parent_id = '0'
+                AND del_yn = 'N'
+            UNION ALL
+            SELECT
+                aeam.id ,
+                aeam.parent_id ,
+                aeam.menu_name ,
+                aeam.menu_link ,
+                menu_folder AS menuFolder ,
+                menu_file AS menuFile ,
+                aeam.menu_icon ,
+                aeam.display_order ,
+                m.depth + 1 ,
+                CONCAT(m.path, ' > ', LPAD(aeam.display_order, 2, '0'))
+            FROM
+                ank_emoji_admin_menu aeam
+            JOIN
+                menu m
+            ON
+                aeam.parent_id = m.id
+            WHERE
+                del_yn = 'N'
+        )
+        SELECT
+            m.id,
+            m.parentId ,
+            m.menuName ,
+            m.menuLink ,
+            m.menuFolder ,
+            m.menuFile ,
+            m.menuIcon ,
+            m.displayOrder ,
+            m.depth ,
+            m.path
+        FROM
+            menu m
+        JOIN
+            ank_emoji_admin_menu_level aeaml
+        ON
+            m.id = aeaml.menu_id
+        WHERE
+            aeaml.level = #{level}
+        ORDER BY
+            path, displayOrder
+    </select>
+
+    <resultMap id="menuListMap" type="MenuList">
+        <id property="id" column="id"/>
+        <result property="menuName" column="menuName"/>
+        <result property="menuLink" column="menuLink"/>
+        <result property="menuFolder" column="menuFolder"/>
+        <result property="menuFile" column="menuFile"/>
+        <result property="displayOrder" column="displayOrder"/>
+        <result property="lv1" column="lv1"/>
+        <result property="lv2" column="lv2"/>
+        <result property="lv3" column="lv3"/>
+        <result property="lv4" column="lv4"/>
+        <collection property="levels" column="levels" javaType="ArrayList" ofType="String">
+            <result property="levels" column="levels"/>
+        </collection>
+    </resultMap>
+
+    <select id="menuList" parameterType="integer" resultMap="menuListMap">
+        /* subMenuList */
+        SELECT
+            aeam.id,
+            aeam.menu_name AS menuName,
+            aeam.menu_link AS menuLink,
+            aeam.menu_folder AS menuFolder,
+            aeam.menu_file AS menuFile,
+            aeam.display_order AS displayOrder,
+            MAX(CASE WHEN aeaml.level = '010001' THEN 'Y' ELSE 'N' END) AS lv1 ,
+            MAX(CASE WHEN aeaml.level = '010002' THEN 'Y' ELSE 'N' END) AS lv2 ,
+            MAX(CASE WHEN aeaml.level = '010003' THEN 'Y' ELSE 'N' END) AS lv3 ,
+            MAX(CASE WHEN aeaml.level = '010004' THEN 'Y' ELSE 'N' END) AS lv4 ,
+            GROUP_CONCAT(aeaml.level) AS levels
+        FROM
+            ank_emoji_admin_menu aeam
+        LEFT JOIN
+            ank_emoji_admin_menu_level aeaml
+        ON
+            aeam.id = aeaml.menu_id
+        WHERE
+            aeam.parent_id = IFNULL(#{topId}, 0)
+            AND aeam.del_yn = 'N'
+        GROUP BY
+            aeam.id
+        ORDER BY
+            displayOrder
+    </select>
+
+    <resultMap id="menuDetailMap" type="MenuDetail">
+        <id property="id" column="id"/>
+        <result property="menuName" column="menuName"/>
+        <result property="menuLink" column="menuLink"/>
+        <result property="menuFolder" column="menuFolder"/>
+        <result property="menuFile" column="menuFile"/>
+        <result property="menuIcon" column="menuIcon"/>
+        <result property="displayOrder" column="displayOrder"/>
+        <result property="lv1" column="lv1"/>
+        <result property="lv2" column="lv2"/>
+        <result property="lv3" column="lv3"/>
+        <result property="lv4" column="lv4"/>
+        <collection property="levels" column="levels" javaType="ArrayList" ofType="String">
+            <result property="levels" column="levels"/>
+        </collection>
+    </resultMap>
+
+    <select id="menuDetail" parameterType="hashMap" resultMap="menuDetailMap">
+        /* menuDetail */
+        SELECT
+            aeam.id ,
+            aeam.menu_name AS menuName ,
+            aeam.menu_link AS menuLink ,
+            aeam.menu_folder AS menuFolder ,
+            aeam.menu_file AS menuFile ,
+            aeam.menu_icon AS menuIcon ,
+            aeam.display_order AS displayOrder ,
+            MAX(CASE WHEN aeaml.level = '010001' THEN 'Y' ELSE 'N' END) AS lv1 ,
+            MAX(CASE WHEN aeaml.level = '010002' THEN 'Y' ELSE 'N' END) AS lv2 ,
+            MAX(CASE WHEN aeaml.level = '010003' THEN 'Y' ELSE 'N' END) AS lv3 ,
+            MAX(CASE WHEN aeaml.level = '010004' THEN 'Y' ELSE 'N' END) AS lv4 ,
+            GROUP_CONCAT(DISTINCT aeaml.level ORDER BY aeaml.level) AS levels
+        FROM
+            ank_emoji_admin_menu aeam
+        LEFT JOIN
+            ank_emoji_admin_menu_level aeaml
+        ON
+            aeam.id = aeaml.menu_id
+        WHERE
+            aeam.id = #{id}
+    </select>
+
+    <insert id="addMenu" parameterType="AddMenu">
+        /* addMenu */
+        INSERT INTO
+            ank_emoji_admin_menu (
+                parent_id ,
+                menu_name ,
+                menu_link ,
+                menu_folder ,
+                menu_file ,
+                menu_icon ,
+                display_order ,
+                del_yn )
+            SELECT
+                #{topId} ,
+                #{menuName} ,
+                #{menuLink} ,
+                #{menuFolder} ,
+                #{menuFile} ,
+                #{menuIcon} ,
+                COALESCE(MAX(display_order) + 1, 0) ,
+                'N'
+            FROM
+                ank_emoji_admin_menu
+            WHERE
+                parent_id = #{topId}
+
+        <selectKey resultType="Integer" keyProperty="id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <insert id="addMenuLevel" parameterType="hashmap">
+        /* addMenuLevel */
+        INSERT INTO
+            ank_emoji_admin_menu_level (
+                menu_id ,
+                level
+            ) VALUES(
+                #{id} ,
+                #{level}
+            )
+    </insert>
+
+    <update id="updateMenu" parameterType="UpdateMenu">
+        /* updateMenu */
+        UPDATE
+            ank_emoji_admin_menu
+        SET
+            menu_name = #{menuName} ,
+            menu_link = #{menuLink} ,
+            menu_folder = #{menuFolder} ,
+            menu_file = #{menuFile} ,
+            menu_icon = #{menuIcon}
+        WHERE
+            id = #{id}
+    </update>
+
+    <delete id="deleteMenuLevel" parameterType="Integer">
+        /* deleteMenuLevel */
+        DELETE
+        FROM
+            ank_emoji_admin_menu_level
+        WHERE
+            menu_id = #{id}
+    </delete>
+
+    <update id="reorderMenu" parameterType="ReorderMenu">
+        /* reorderMenu */
+        UPDATE
+            ank_emoji_admin_menu
+        SET
+            display_order = #{displayOrder}
+        WHERE
+            id = #{id}
+    </update>
+
+    <delete id="deleteMenu" parameterType="Integer">
+        /* deleteMenu */
+        UPDATE
+            ank_emoji_admin_menu
+        SET
+            del_yn = 'Y'
+        WHERE
+            id IN <foreach collection="ids" item="id" open="(" close=")" separator=", ">#{id}</foreach>
+    </delete>
+</mapper>

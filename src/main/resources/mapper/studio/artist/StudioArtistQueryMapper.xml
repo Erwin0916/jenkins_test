@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.studio.artist.dao.mapper.StudioArtistQueryMapper">
+    <select id="getEmojiArtistByAngkorId" parameterType="String" resultType="ArtistInfo">
+        /* getEmojiArtistByAngkorId */
+        SELECT name_en AS nameEn, name_kh AS nameKh, passport_name AS passportName, phone, phonenumber AS phoneNumber, phonecode AS phoneCode, base_address AS baseAddress, detail_address AS detailAddress,
+               zip_code AS zipCode, account_number AS accountNumber, bank_name AS bankName, account_owner AS accountOwner, email,
+               attach_file_url AS attachFileUrl, commission, status, status_reason AS statusReason, reg_dt AS regDt
+          FROM ank_emoji_artist
+         WHERE angkorid = #{angkorId}
+           AND status != 3
+    </select>
+
+    <select id="checkArtistNameDuplicate" parameterType="hashMap" resultType="StudioArtistNameDto">
+        /* checkArtistNameDuplicate */
+        SELECT
+            name_en AS nameEn,
+            name_kh AS nameKm
+        FROM
+            ank_emoji_artist
+        WHERE
+            status != 3
+            AND ( name_en = #{name}
+            OR name_kh = #{nameKm})
+        LIMIT 1
+    </select>
+
+    <select id="studioArtistDetail" parameterType="Integer" resultType="StudioArtistDetail">
+        /* studioArtistDetail */
+        SELECT
+            id ,
+            passport_name ,
+            name_en AS nameEn ,
+            name_kh AS nameKm ,
+            email ,
+            phone ,
+            zip_code ,
+            phonenumber AS phoneNumber ,
+            phonecode AS phoneCode ,
+            base_address AS baseAddress ,
+            detail_address AS detailAddress
+        FROM
+            ank_emoji_artist
+        WHERE
+            id = #{id}
+    </select>
+
+    <update id="modifyStudioArtistInfo" parameterType="ModifyStudioArtist">
+        /* modifyStudioArtistInfo */
+        UPDATE
+            ank_emoji_artist
+        SET
+            passport_name = #{passportName},
+            name_en = #{nameEn} ,
+            name_kh = #{nameKm} ,
+            email = #{email},
+            phone = #{phone},
+            zip_code = #{zipCode},
+            phonenumber = #{phoneNumber} ,
+            phonecode = #{phoneCode} ,
+            base_address = #{baseAddress} ,
+            detail_address = #{detailAddress} ,
+            upd_dt = NOW()
+        WHERE
+            id = #{id}
+    </update>
+
+
+    <insert id="artistSignup" parameterType="StudioSignUp" useGeneratedKeys="true" keyProperty="id">
+        /* artistSignup */
+        INSERT INTO
+            ank_emoji_artist (
+                angkorid ,
+                name_en ,
+                name_kh ,
+                phonecode ,
+                phonenumber ,
+                phone ,
+                passport_name ,
+                email ,
+                status ,
+                reg_dt
+            ) VALUES (
+                #{angkorId} ,
+                #{artistName} ,
+                #{artistNameKm} ,
+                #{phoneCode} ,
+                #{phoneNumber} ,
+                #{phone} ,
+                #{passportName} ,
+                #{email} ,
+                '1' ,
+                NOW()
+            )
+    </insert>
+
+    <update id="setArtistAttachFile" parameterType="hashMap">
+        /* setArtistAttachFile */
+        UPDATE
+            ank_emoji_artist
+        SET
+            attach_file_url = #{url}
+        WHERE
+            id = #{id}
+    </update>
+
+    <insert id="insertArtistLog" parameterType="Integer">
+        /* insertArtistLog */
+        INSERT INTO
+            ank_emoji_artist_log (
+                artist_id ,
+                angkorid ,
+                name_en ,
+                name_kh ,
+                phonecode ,
+                phonenumber ,
+                phone ,
+                attach_file_url ,
+                passport_name ,
+                email ,
+                status ,
+                reg_dt ,
+                save_dt
+            ) SELECT
+                id ,
+                angkorid ,
+                name_en ,
+                name_kh,
+                phonecode ,
+                phonenumber ,
+                phone ,
+                attach_file_url ,
+                passport_name ,
+                email ,
+                status ,
+                reg_dt ,
+                NOW()
+            FROM
+                ank_emoji_artist
+            WHERE
+                id = #{id}
+    </insert>
+
+    <insert id="artistTermAgreement" parameterType="hashMap" useGeneratedKeys="true" keyProperty="req.agreeId">
+        /* artistTermAgreement */
+        INSERT INTO
+            ank_emoji_studio_terms_agree (
+                terms_id ,
+                angkorid ,
+                version ,
+                terms_type ,
+                agree_yn ,
+                save_tm
+            ) VALUES
+            <foreach collection="req" item="term" separator=",">
+                (#{term.termId}, #{angkorId}, #{term.version},  #{term.termType}, #{term.agreeYn}, NOW())
+            </foreach>
+    </insert>
+
+    <insert id="artistTermAgreementLog" parameterType="List">
+        /* artistTermAgreementLog */
+        INSERT INTO
+            ank_emoji_studio_terms_agree_log (
+                agree_id ,
+                terms_id ,
+                angkorid ,
+                version ,
+                terms_type ,
+                agree_yn ,
+                update_tm ,
+                save_tm ,
+                save_log_tm
+            ) SELECT
+                id ,
+                terms_id ,
+                angkorid ,
+                version ,
+                terms_type ,
+                agree_yn ,
+                update_tm ,
+                save_tm ,
+                NOW()
+            FROM
+                ank_emoji_studio_terms_agree
+            WHERE
+                id IN <foreach collection="ids" item="id" open="(" close=")" separator=", ">#{id}</foreach>
+    </insert>
+
+    <select id="studioArtistBankInfo" parameterType="Integer" resultType="StudioArtistBankInfo">
+        /* studioArtistBankInfo */
+        SELECT
+            account_owner AS accountHolder,
+            account_number ,
+            bank_name
+        FROM
+            ank_emoji_artist
+        WHERE
+            id = #{id}
+    </select>
+</mapper>

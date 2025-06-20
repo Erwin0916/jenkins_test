@@ -1,0 +1,141 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.0.14.RELEASE'
+    id 'jacoco'
+}
+
+group = 'com.angkorchat.emoji.cms'
+version = ''
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
+jar {
+	enabled = false
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+	configureEach {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+	}
+	testImplementation {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.data:spring-data-commons:2.5.6'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	// AWS S3
+	implementation 'com.amazonaws:aws-java-sdk-ses:1.12.408'
+	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+	// log4j2
+	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+	implementation 'org.slf4j:slf4j-api:2.0.0'
+	implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
+	implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
+
+	// DATABASE
+	runtimeOnly 'mysql:mysql-connector-java:8.0.33'
+
+	// Mybatis
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	testCompileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.4'
+
+	// APACHE COMMONS
+	implementation 'commons-io:commons-io:2.11.0'
+	implementation 'org.apache.commons:commons-lang3:3.12.0'
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
+	// MAIL
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	// Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+	// TEST
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.mockito:mockito-inline:3.8.0'
+
+	// devTools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// json
+	implementation 'org.json:json:20201115'
+	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+	// shedLock
+	implementation 'net.javacrumbs.shedlock:shedlock-spring:2.2.0'
+	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:2.1.0'
+
+	// Servlet API
+	compileOnly 'jakarta.servlet:jakarta.servlet-api:5.0.0'
+
+	// REDIS
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// ZXing
+	implementation 'com.google.zxing:core:3.5.2'
+	implementation 'com.google.zxing:javase:3.5.2'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+jacoco {
+	toolVersion = "0.8.11"
+	reportsDirectory = layout.buildDirectory.dir('reports')
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = false
+		csv.required = false
+		html.outputLocation = layout.buildDirectory.dir('jococoHtml')
+	}
+}
+
+test {
+	systemProperty 'spring.profiles.active', 'test'
+	finalizedBy jacocoTestReport // 테스트가 끝난 후에 jacocoTestReport 태스크를 실행
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				minimum = 0
+			}
+		}
+	}
+}

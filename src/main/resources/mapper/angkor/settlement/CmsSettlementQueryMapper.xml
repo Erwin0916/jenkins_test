@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.angkorchat.emoji.cms.domain.angkor.settlement.dao.mapper.CmsSettlementQueryMapper">
+    <select id="cmsSettlementInfo" parameterType="hashMap" resultType="CmsSettlementInfo">
+        /* cmsSettlementInfo */
+        SELECT
+            aaasr.id ,
+            aea.name_en AS artistName ,
+            aaasr.amount ,
+            aaasr.reg_dt As  regDt ,
+            aaasr.issue_status AS issueStatus ,
+            aaasr.issue_reg_dt AS issueRegDt ,
+            aaasr.account_number ,
+            aaasr.bank_name ,
+            aaasr.account_owner ,
+            aaasr.admin_memo ,
+            aeau.name AS issueRegAdmin
+        FROM
+            ank_artist_account_settlement_request aaasr
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaasr.artist_id = aea.id
+        LEFT JOIN
+            ank_emoji_admin_user aeau
+        ON
+            aaasr.issue_reg_id = aeau.id
+        WHERE
+            aaasr.id = #{id}
+    </select>
+
+
+    <sql id="cmsSettlementRequestListCondition">
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND aea.name_en LIKE CONCAT('%', #{searchKeyword}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND aaasr.issue_status = #{status}
+        </if>
+    </sql>
+
+    <select id="cmsSettlementRequestList" parameterType="hashMap" resultType="CmsSettlementRequestList">
+        /* cmsSettlementRequestList */
+        SELECT
+            aaasr.id AS id ,
+            aea.name_en AS artistName ,
+            aaasr.amount ,
+            aaasr.reg_dt As regDt ,
+            aaasr.issue_status AS issueStatus
+        FROM
+            ank_artist_account_settlement_request aaasr
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaasr.artist_id = aea.id
+        <where>
+            <include refid="cmsSettlementRequestListCondition"/>
+        </where>
+        <include refid="common.sortAndOrder"/>
+        <include refid="common.limitAndOffset"/>
+    </select>
+
+    <select id="cmsSettlementRequestListCount" parameterType="hashMap" resultType="long">
+        /* cmsSettlementRequestListCount */
+        SELECT
+            COUNT(*)
+        FROM
+            ank_artist_account_settlement_request aaasr
+        JOIN
+            ank_emoji_artist aea
+        ON
+            aaasr.artist_id = aea.id
+        <where>
+            <include refid="cmsSettlementRequestListCondition"/>
+        </where>
+    </select>
+
+    <select id="checkArtistAccountExist" parameterType="Integer" resultType="Integer">
+        /* checkArtistAccountExist */
+        SELECT
+            aaasr.artist_id
+        FROM
+            ank_artist_account aaa
+        JOIN
+            ank_artist_account_settlement_request aaasr
+        ON
+            aaa.artist_id = aaasr.artist_id
+        WHERE
+            aaasr.id = #{id}
+    </select>
+
+    <insert id="batchSettlement" parameterType="String">
+        /* batchSettlement */
+        INSERT INTO
+            ank_emoji_settlement (
+                stat_date ,
+                artist_id ,
+                supply_amount ,
+                vat_amount ,
+                commission_amount ,
+                total_amount
+            ) SELECT
+                stat.stat_date ,
+                aea.id ,
+                stat.totalPrice,
+                ROUND(stat.totalPrice / 10.0, 2),
+                ROUND(stat.totalPrice * (aea.commission / 100.0), 2),
+                ROUND(stat.totalPrice * (1.0 - (aea.commission / 100.0)), 2)
+            FROM (
+                SELECT
+                    artist_id ,
+                    stat_date ,
+                    ROUND(SUM(POINT * cnt) * 0.025,2) AS totalPrice
+                FROM
+                    ank_emoji_stat_sales_daily
+                WHERE
+                    stat_date = #{statDate}
+                GROUP BY
+                    artist_id, stat_date
+            ) AS stat
+            JOIN
+                ank_emoji_artist aea
+            ON
+                stat.artist_id = aea.id
+        ON DUPLICATE KEY UPDATE
+            supply_amount = VALUES(supply_amount),
+            vat_amount = VALUES(vat_amount),
+            commission_amount = VALUES(commission_amount),
+            total_amount = VALUES(total_amount)
+    </insert>
+
+    <insert id="batchAvailableAmountSettlement" parameterType="String">
+        /* batchAvailableAmountSettlement */
+        UPDATE
+            ank_artist_account aaa
+        JOIN (
+            SELECT
+                artist_id,
+                SUM(total_amount) AS monthlyAmount
+            FROM
+                ank_emoji_settlement
+            WHERE
+                stat_date >= CONCAT(#{statDate},'01')
+                AND stat_date <![CDATA[<=]]> CONCAT(#{statDate},'31')
+            GROUP BY
+                artist_id
+        ) AS monthlySale
+        ON
+            aaa.artist_id = monthlySale.artist_id
+        SET
+            aaa.amount = monthlySale.monthlyAmount;
+    </insert>
+
+<!--    <select id="checkAvailableSettleAmount" parameterType="Integer" resultType="Long">-->
+<!--        /* checkAvailableSettleAmount */-->
+<!--        SELECT-->
+<!--            amount-->
+<!--        FROM-->
+<!--            ank_artist_account-->
+<!--        WHERE-->
+<!--            artist_id = #{id}-->
+<!--    </select>-->
+
+    <insert id="cmsArtistSettle" parameterType="hashMap">
+        /* cmsArtistSettle */
+        UPDATE
+            ank_artist_account_settlement_request
+        SET
+            admin_memo = #{adminMemo} ,
+            issue_status = 'Y' ,
+            issue_reg_id = #{adminId} ,
+            issue_reg_dt = NOW()
+        WHERE
+            id = #{id}
+    </insert>
+
+    <select id="getSettleAmount" parameterType="Integer" resultType="BigDecimal">
+        /* getSettleAmount */
+        SELECT
+            amount
+        FROM
+            ank_artist_account_settlement_request
+        WHERE
+            id = #{id}
+    </select>
+
+    <insert id="insertArtistAccountLog" parameterType="hashMap">
+        /* insertArtistAccountLog */
+        INSERT INTO
+            ank_artist_account_log (
+                account_id ,
+                artist_id ,
+                type ,
+                amount ,
+                request_id ,
+                tax_stat_date ,
+                content
+            ) SELECT
+                aaa.id ,
+                aaa.artist_id ,
+                'D' ,
+                -aaasr.amount ,
+                aaasr.id ,
+                #{statDate} ,
+                CONCAT(#{statDate},' : ',-aaasr.amount)
+            FROM
+                ank_artist_account aaa
+            JOIN
+                ank_artist_account_settlement_request aaasr
+            ON
+                aaa.artist_id = aaasr.artist_id
+                AND aaasr.issue_status = 'N'
+            WHERE
+                aaasr.id = #{id}
+    </insert>
+
+    <insert id="registerBatchSettlementAccountLog" parameterType="String">
+        /* registerBatchSettlementAccountLog */
+        INSERT INTO
+            ank_artist_account_log (
+                account_id ,
+                artist_id ,
+                type ,
+                amount ,
+                tax_stat_date ,
+                content
+            ) SELECT
+                aaa.id,
+                monthlySale.artist_id,
+                'I' AS TYPE,
+                monthlySale.monthlyAmount,
+                #{statDate} ,
+                CONCAT(#{statDate},' : ',monthlySale.monthlyAmount)
+            FROM
+                ank_artist_account aaa
+            JOIN (
+                SELECT
+                    artist_id,
+                    SUM(total_amount) AS monthlyAmount
+                FROM
+                    ank_emoji_settlement
+                WHERE
+                    stat_date >= CONCAT(#{statDate},'01')
+                    AND stat_date <![CDATA[<=]]> CONCAT(#{statDate},'31')
+                GROUP BY
+                    artist_id
+            ) AS monthlySale ON aaa.artist_id = monthlySale.artist_id
+    </insert>
+
+    <update id="cmsUpdateArtistAccount" parameterType="hashMap">
+        /* cmsUpdateArtistAccount */
+        UPDATE
+            ank_artist_account
+        SET
+            complete_amount = complete_amount + #{amount}
+        WHERE
+            artist_id = #{id}
+    </update>
+</mapper>
