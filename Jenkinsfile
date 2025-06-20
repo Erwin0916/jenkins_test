@@ -11,24 +11,41 @@ pipeline {
                     file(credentialsId: 'application-prod', variable: 'application_prod')
                 ]) {
                     script {
-                        sh '''
-                            mkdir -p /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources
-                            chmod -R u+rwX /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources
-                        '''
                         sh """
-                            cp "$application" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application.yml
-                            cp "$application_email" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-email.properties
-                            cp "$application_dev" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-dev.properties
-                            cp "$application_prod" /var/jenkins_home/workspace/jenkins-emoji-cms-api/src/main/resources/application-prod.properties
+                            mkdir -p ${env.WORKSPACE}/Jenkins-build-deploy/src/main/resources
+                            chmod -R u+rwX ${env.WORKSPACE}/Jenkins-build-deploy/src/main/resources
+                            mkdir -p ${env.WORKSPACE}/jenkins-emoji-cms-api/src/main/resources
+                            chmod -R u+rwX ${env.WORKSPACE}/jenkins-emoji-cms-api/src/main/resources
+
+                            cp "$application" ${env.WORKSPACE}/Jenkins-build-deploy/src/main/resources/application.yml
+                            cp "$application_email" ${env.WORKSPACE}/Jenkins-build-deploy/src/main/resources/application-email.properties
+                            cp "$application_dev" ${env.WORKSPACE}/Jenkins-build-deploy/src/main/resources/application-dev.properties
+                            cp "$application_prod" ${env.WORKSPACE}/Jenkins-build-deploy/src/main/resources/application-prod.properties
+                            cp "$application" ${env.WORKSPACE}/jenkins-emoji-cms-api/src/main/resources/application.yml
+                            cp "$application_email" ${env.WORKSPACE}/jenkins-emoji-cms-api/src/main/resources/application-email.properties
+                            cp "$application_dev" ${env.WORKSPACE}/jenkins-emoji-cms-api/src/main/resources/application-dev.properties
+                            cp "$application_prod" ${env.WORKSPACE}/jenkins-emoji-cms-api/src/main/resources/application-prod.properties
                         """
                     }
                 }
             }
         }
 
-        stage('build') {
+        stage('build-emoji-cms-api') {
             steps {
-                dir('/var/jenkins_home/workspace/jenkins-emoji-cms-api') {
+                dir("${env.WORKSPACE}/jenkins-emoji-cms-api") {
+                   sh '''
+                        echo 'start bootJar'
+                        chmod +x gradlew
+                        ./gradlew clean bootJar
+                   '''
+                }
+            }
+        }
+
+        stage('build-jenkins-build-deploy') {
+            steps {
+                dir("${env.WORKSPACE}/Jenkins-build-deploy") {
                    sh '''
                         echo 'start bootJar'
                         chmod +x gradlew
