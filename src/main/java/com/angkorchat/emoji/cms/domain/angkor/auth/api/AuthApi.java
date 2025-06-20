@@ -49,7 +49,7 @@ public class AuthApi {
         ResponseEntity<LoginTokenDto> res;
 
         res = ResponseEntity.ok(authService.login(request));
-
+        // 파이프라인 테스트
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
