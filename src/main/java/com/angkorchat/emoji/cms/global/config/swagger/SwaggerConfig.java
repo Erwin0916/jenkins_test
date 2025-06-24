@@ -32,13 +32,7 @@ public class SwaggerConfig {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
                                 .in(SecurityScheme.In.HEADER)))
-                .addSecurityItem(new SecurityRequirement().addList("Authorization"))
-                .addServersItem(new Server()
-                        .url("https://62e7-112-172-128-11.ngrok-free.app")
-                        .description("Development server"))
-                .addServersItem(new Server()
-                        .url("http://localhost:8095")
-                        .description("Local server"));
+                .addSecurityItem(new SecurityRequirement().addList("Authorization"));
     }
 
     /**

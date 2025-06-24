@@ -77,36 +77,37 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedMethods(Arrays.asList("HEAD", "GET", "POST", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "X-Requested-With", "Accept", "Origin", "Set-Cookie", "Set-Cookie2"));
-//        // react
+        configuration.addAllowedOrigin("*");
+        //        // react
 //        configuration.addAllowedOriginPattern("http://localhost:[3000,3001,3002,3003,3004,3005,8095]");
 //        configuration.addAllowedOriginPattern("https://localhost:[3000,3001,3002,3003,3004,3005,8095]");
 //        // vite
 //        configuration.addAllowedOriginPattern("http://localhost:[5173,5174,5175,5176,5178]");
-        configuration.addAllowedOrigin("http://localhost:3000");
-        configuration.addAllowedOrigin("http://localhost:3001");
-        configuration.addAllowedOrigin("http://localhost:3002");
-        configuration.addAllowedOrigin("http://localhost:3003");
-        configuration.addAllowedOrigin("http://localhost:3004");
-        configuration.addAllowedOrigin("http://localhost:3005");
-        configuration.addAllowedOrigin("https://localhost:3000");
-        configuration.addAllowedOrigin("https://localhost:3001");
-        configuration.addAllowedOrigin("https://localhost:3002");
-        configuration.addAllowedOrigin("https://localhost:3003");
-        configuration.addAllowedOrigin("https://localhost:3004");
-        configuration.addAllowedOrigin("https://localhost:3005");
-        configuration.addAllowedOrigin("http://localhost:8095");
-        configuration.addAllowedOrigin("http://localhost:5173");
-        configuration.addAllowedOrigin("http://localhost:5174");
-        configuration.addAllowedOrigin("http://localhost:5175");
-        configuration.addAllowedOrigin("http://localhost:5176");
-        configuration.addAllowedOrigin("http://localhost:5178");
-        configuration.addAllowedOrigin("https://62e7-112-172-128-11.ngrok-free.app");
-        configuration.addAllowedOrigin("https://cms-emoji-sandbox.prjt.com");
-        configuration.addAllowedOrigin("https://emojistudio-sandbox.angkorlifes.com");
-        configuration.addAllowedOrigin("https://emojistudio.angkorlifes.com");
-        configuration.addAllowedOrigin("https://cms-api-emoji-sandbox.angkorlifes.com");
-        configuration.addAllowedOrigin("https://cms-emoji-sandbox.angkorlifes.com");
-        configuration.addAllowedOrigin("https://cms-emoji.angkorlifes.com");
+//        configuration.addAllowedOrigin("http://localhost:3000");
+//        configuration.addAllowedOrigin("http://localhost:3001");
+//        configuration.addAllowedOrigin("http://localhost:3002");
+//        configuration.addAllowedOrigin("http://localhost:3003");
+//        configuration.addAllowedOrigin("http://localhost:3004");
+//        configuration.addAllowedOrigin("http://localhost:3005");
+//        configuration.addAllowedOrigin("https://localhost:3000");
+//        configuration.addAllowedOrigin("https://localhost:3001");
+//        configuration.addAllowedOrigin("https://localhost:3002");
+//        configuration.addAllowedOrigin("https://localhost:3003");
+//        configuration.addAllowedOrigin("https://localhost:3004");
+//        configuration.addAllowedOrigin("https://localhost:3005");
+//        configuration.addAllowedOrigin("http://localhost:8095");
+//        configuration.addAllowedOrigin("http://localhost:5173");
+//        configuration.addAllowedOrigin("http://localhost:5174");
+//        configuration.addAllowedOrigin("http://localhost:5175");
+//        configuration.addAllowedOrigin("http://localhost:5176");
+//        configuration.addAllowedOrigin("http://localhost:5178");
+//
+//        configuration.addAllowedOrigin("https://cms-emoji-sandbox.prjt.com");
+//        configuration.addAllowedOrigin("https://emojistudio-sandbox.angkorlifes.com");
+//        configuration.addAllowedOrigin("https://emojistudio.angkorlifes.com");
+//        configuration.addAllowedOrigin("https://cms-api-emoji-sandbox.angkorlifes.com");
+//        configuration.addAllowedOrigin("https://cms-emoji-sandbox.angkorlifes.com");
+//        configuration.addAllowedOrigin("https://cms-emoji.angkorlifes.com");
 
 //        configuration.addAllowedHeader("*");
 //        configuration.addAllowedMethod("*");
