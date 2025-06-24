@@ -60,7 +60,7 @@ public class AdminApi {
     @PostMapping
     public ResponseEntity<?> registerAdmin(@Valid @RequestBody RegisterAdmin req) {
         adminService.registerAdmin(req);
-
+//
         return ResponseEntity.ok().build();
     }
 
