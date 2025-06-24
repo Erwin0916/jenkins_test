@@ -73,7 +73,7 @@ public class AdminApi {
     public ResponseEntity<?> modifyAdmin(@Parameter(name = "id", description = "등록 번호") @Min(value = 1) @PathVariable(name = "id") Integer id,
                                          @Valid @RequestBody ModifyAdminInfo req) {
         adminService.modifyAdminInfo(id, req);
-
+//
         return ResponseEntity.ok().build();
     }
 
