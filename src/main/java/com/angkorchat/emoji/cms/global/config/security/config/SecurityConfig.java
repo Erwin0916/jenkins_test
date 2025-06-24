@@ -100,6 +100,7 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost:5175");
         configuration.addAllowedOrigin("http://localhost:5176");
         configuration.addAllowedOrigin("http://localhost:5178");
+        configuration.addAllowedOrigin("https://62e7-112-172-128-11.ngrok-free.app");
         configuration.addAllowedOrigin("https://cms-emoji-sandbox.prjt.com");
         configuration.addAllowedOrigin("https://emojistudio-sandbox.angkorlifes.com");
         configuration.addAllowedOrigin("https://emojistudio.angkorlifes.com");
