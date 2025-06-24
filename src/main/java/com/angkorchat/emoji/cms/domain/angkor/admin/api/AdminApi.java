@@ -42,7 +42,7 @@ public class AdminApi {
     public Page<AdminList> adminList(@Parameter(name = "pageable", description = "pageable") @PageableDefault Pageable pageable,
                                      @Size(max =64) @RequestParam(name = "searchKeyword", required = false) String searchKeyword) {
         pageable = CommonUtils.validSort(pageable, "Unsorted");
-
+//
         return adminService.adminList(pageable, searchKeyword);
     }
 
