@@ -71,7 +71,7 @@ public class CmsEmojiApi {
     /**
      * Emoji Detail
      **/
-    @Operation(summary = "Emoji Detail", description = "Emoji Detail 을 조회한다.", tags = "CMS Emoji API")
+    @Operation(summary = "Emoji Detail - Jenkins Test 수정사항", description = "Emoji Detail 을 조회한다. - Jenkins Test 수정사항", tags = "CMS Emoji API")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/{id}")
     public EmojiDetail emojiDetail(@Parameter(name = "id", description = "Emoji ID") @Min(value = 1) @PathVariable(name = "id") Integer id) {

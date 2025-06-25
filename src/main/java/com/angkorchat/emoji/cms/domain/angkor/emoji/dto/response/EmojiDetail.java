@@ -10,13 +10,13 @@ import java.util.List;
 @Getter
 @Setter
 public class EmojiDetail {
-    @Schema(description = "Emoji ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(description = "Emoji ID - Jenkins Test 수정사항", requiredMode = Schema.RequiredMode.REQUIRED, example = "2")
     private Integer id;
-    @Schema(description = "Emoji 영어 이름", requiredMode = Schema.RequiredMode.REQUIRED, example = "emoji A")
+    @Schema(description = "Emoji 영어 이름 - Jenkins Test 수정사항", requiredMode = Schema.RequiredMode.REQUIRED, example = "emoji A - Jenkins Test 수정사항")
     private String emojiNameEn;
-    @Schema(description = "Emoji 크메르어 이름", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "emoji A")
+    @Schema(description = "Emoji 크메르어 이름 - Jenkins Test 수정사항", requiredMode = Schema.RequiredMode.REQUIRED, example = "emoji A - Jenkins Test 수정사항")
     private String emojiNameKm;
-    @Schema(description = "Emoji Artist ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+    @Schema(description = "Emoji Artist ID", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "2")
     private Integer artistId;
     @Schema(description = "Artist Name(영어)", requiredMode = Schema.RequiredMode.REQUIRED, example = "Artist name")
     private String artistName;
