@@ -64,7 +64,7 @@ public class CmsEmojiApi {
                                         @Size(max = 150) @RequestParam(name = "searchKeyword", required = false) String searchKeyword) {
         pageable = CommonUtils.validSort(pageable, "Unsorted");
         pageable = CommonUtils.setDefaultSort(pageable, Sort.by("id").descending());
-
+//
         return cmsEmojiService.emojiList(pageable, status, emojiType, searchKeyword);
     }
 
